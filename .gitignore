@@ -1,0 +1,8 @@
+.vscode
+sasc
+.DS_Store
+*.gv
+cmake-build-debug
+.idea
+sasc.dSYM
+CMakeLists.txt
