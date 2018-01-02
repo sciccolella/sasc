@@ -24,7 +24,7 @@ do
     FILE+="_scs.txt"
     echo $FILE
 
-    echo "./sasc -i $FILE -m $MUTATIONS -n $CELLS -a $SASC_FN -b $SASC_FP -k $SASC_K"
+    ./sasc -i $FILE -m $MUTATIONS -n $CELLS -a $SASC_FN -b $SASC_FP -k $SASC_K
 
     if [ $(($ID % $CORES)) -eq "0" ]; then
         wait
