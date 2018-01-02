@@ -100,8 +100,8 @@ int main (int argc, char **argv)
 
     double START_TEMP = 100000.0;
     double COOLING_RATE = 0.00001;
-    double MIN_TEMP = 0.000001;
-    int REPETITIONS = 3;
+    double MIN_TEMP = 0.0001;
+    int REPETITIONS = 5;
     node_t *best_tree;
     double best_loglike = -DBL_MAX;
     int best_sigma[N]; for (int i = 0; i < N; i++) { best_sigma[i] = 0; }
