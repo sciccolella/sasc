@@ -201,13 +201,21 @@ print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX) {
 
 void
 fprint_tree_rec(node_t *node, FILE *fo) {
-  if (node == NULL) return;
-  fprint_tree_rec(node->first_child, fo);
-  fprint_tree_rec(node->next_sibling, fo);
-  if(node->parent != NULL)
-    fprintf(fo, "\t\"%s\" -> \"%s\";\n",
-              node->parent->label,
-              node->label);
+    if (node == NULL) return;
+    fprint_tree_rec(node->first_child, fo);
+    fprint_tree_rec(node->next_sibling, fo);
+
+    if(node->parent != NULL)
+        fprintf(fo, "\t\"%d\" -> \"%d\";\n",
+               node->parent->id,
+               node->id);
+
+    if (node->loss == 1)
+        fprintf(fo, "\t\"%d\" [color=indianred1, style=filled, label=\"%s\"];\n",
+               node->id, node->label);
+    else
+        fprintf(fo, "\t\"%d\" [label=\"%s\"];\n",
+               node->id, node->label);
 }
 
 void

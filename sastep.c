@@ -278,7 +278,7 @@ accept_prob(double old_lh, double new_lh, double current_temp) {
 }
 
 node_t *
-anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double alpha, double beta,  int **inmatrix, double start_temp, double cooling_rate, double min_temp) {
+anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double alpha, double beta,  int **inmatrix, double start_temp, double cooling_rate, double min_temp, double *best_lh) {
     double current_temp = start_temp;
 
     // Vector of node indices
@@ -402,7 +402,6 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
         }
 
         // Destroy neighbor
-        // print_tree(copy_root);
         destroy_tree(copy_root);
         vector_free(&copy_tree_vec);
         vector_free(&copy_losses_vec);
@@ -418,7 +417,7 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
             
     }
 
-    printf("\nMax Log-Likelihood: %lf\n", current_lh);
+    *best_lh = current_lh;
 
     // Change SIGMA to best solution
 

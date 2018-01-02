@@ -1,10 +1,17 @@
 Simulated Annealing Single-Cell (SASC) -- cancer progression inference
 ===================
 
-Compile with:
+Compile
+--------
 
+*OSX*
 ```bash
     gcc -o sasc *.c -std=c99
+```
+
+*Linux*
+```bash
+    gcc -o sasc *.c -std=gnu99 -g -lm
 ```
 
 Run with:

@@ -4,6 +4,7 @@
 #include "mt19937ar.h"
 #include <time.h>
 #include <assert.h>
+#include <float.h>
 #include "tree.h"
 #include "utils.h"
 #include "sastep.h"
@@ -27,13 +28,15 @@ int main (int argc, char **argv)
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
 
   /* Print argument values */
-    printf("n: %d\n", N);
-    printf("m: %d\n", M);
-    printf("k: %d\n", K);
-    printf("a: %f\n", ALPHA);
-    printf("b: %f\n", BETA);
-    printf("i: %s\n", arguments->infile);
-    printf("e: %s\n", arguments->mut_file);
+//    printf("n: %d\n", N);
+//    printf("m: %d\n", M);
+//    printf("k: %d\n", K);
+//    printf("a: %f\n", ALPHA);
+//    printf("b: %f\n", BETA);
+//    printf("i: %s\n", arguments->infile);
+//    printf("e: %s\n", arguments->mut_file);
+
+    printf("Starting SASC.\n");
 
     // Set random seed
     srand((unsigned)time(NULL));
@@ -70,43 +73,6 @@ int main (int argc, char **argv)
             
     }
 
-    // Generate a RANDOM BTREE
-    node_t *TREE[K*M]; // delete this
-    vector tree_nodes;
-    vector_init(&tree_nodes);
-
-    node_t *root = node_new("germline", -1, 0);
-    vector_add(&tree_nodes, root);
-
-    int rantree[M];
-    for (int i = 0; i < M; i++) {
-        rantree[i] = i;
-    }
-    shuffle(rantree, M);
-
-    int app_node = 0;
-    for (int i = 0; i < M; i++) {
-        node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
-        vector_add(&tree_nodes, cnode1);
-        node_append(vector_get(&tree_nodes, app_node), cnode1);
-        i += 1;
-
-        if (i < M){
-            node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
-            vector_add(&tree_nodes, cnode2);
-            node_append(vector_get(&tree_nodes, app_node), cnode2);
-        }
-        app_node += 1;
-    }
-
-//    printf("m: %d, v_tot: %d\n", M, vector_total(&tree_nodes));
-
-    for (int i = 0; i < vector_total(&tree_nodes); i++) {
-
-        node_t *n = vector_get(&tree_nodes, i);
-        assert(n->id == i);
-    }
-
     //Itialize MT19937
 
     unsigned long init[10], length=10;
@@ -122,23 +88,6 @@ int main (int argc, char **argv)
 
     init_by_array(init, length);
 
-    // Generate SIGMA
-    int SIGMA[N];
-
-
-
-    for (int i = 0; i < N; i++) {
-        SIGMA[i] = random_assignment(M);
-    }
-    
-    // fprint_tree(root, OUT_PATH);
-    // fprint_tree_leaves(root, TREE, SIGMA, N, OUT_PATH);
-
-//     for (int i=0; i<N;i++) {
-//         printf("%d,", SIGMA[i]);
-//     }
-//     printf("\n");
-
     // Import INFILE
     int **INPUT_MATRIX;
     INPUT_MATRIX = malloc(N * sizeof *INPUT_MATRIX);
@@ -148,46 +97,96 @@ int main (int argc, char **argv)
 
     import_input(INPUT_MATRIX, N, M, arguments->infile);
 
-//     print_tree(root);
-
-    // get log-likelihood
-    double lh = tree_loglikelihood(root, tree_nodes, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
-    printf("Start log-like: %lf\n", lh);
 
     double START_TEMP = 100000.0;
     double COOLING_RATE = 0.00001;
     double MIN_TEMP = 0.000001;
-    // int REPETITIONS = 1;
+    int REPETITIONS = 3;
+    node_t *best_tree;
+    double best_loglike = -DBL_MAX;
+    int best_sigma[N]; for (int i = 0; i < N; i++) { best_sigma[i] = 0; }
+    vector best_tree_vec;
+    vector_init(&best_tree_vec);
+    vector best_losses_vec;
+    vector_init(&best_losses_vec);
 
-    // node_t *ml_tree = root;
+    for (int r = 0; r < REPETITIONS; r++) {
+        printf("Iteration: %d\n", r+1);
 
-    // for (int r = 0; r < REPETITIONS; r++) {
-    //     printf("Iteration: %d\n", r+1);
-    node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP);
-    // }
+        // Generate a RANDOM BTREE
+        vector tree_nodes;
+        vector_init(&tree_nodes);
+
+        node_t *root = node_new("germline", -1, 0);
+        vector_add(&tree_nodes, root);
+
+        int rantree[M];
+        for (int i = 0; i < M; i++) {
+            rantree[i] = i;
+        }
+        shuffle(rantree, M);
+
+        int app_node = 0;
+        for (int i = 0; i < M; i++) {
+            node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
+            vector_add(&tree_nodes, cnode1);
+            node_append(vector_get(&tree_nodes, app_node), cnode1);
+            i += 1;
+
+            if (i < M){
+                node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
+                vector_add(&tree_nodes, cnode2);
+                node_append(vector_get(&tree_nodes, app_node), cnode2);
+            }
+            app_node += 1;
+        }
+
+        // Generate SIGMA
+        int SIGMA[N];
+        for (int i = 0; i < N; i++) {
+            SIGMA[i] = random_assignment(M);
+        }
+
+
+        // get log-likelihood
+        double lh = tree_loglikelihood(root, tree_nodes, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
+        printf("Start log-like: %lf\n", lh);
+        double current_lh = 0;
+        node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, &current_lh);
+        printf("Maximum log-likelihood: %lf\n", current_lh);
+
+        if (current_lh > best_loglike) {
+            if (best_tree != NULL)
+                destroy_tree(best_tree);
+
+            vector_free(&best_tree_vec);
+            vector_free(&best_losses_vec);
+
+            vector_init(&best_tree_vec);
+            vector_init(&best_losses_vec);
+
+            best_tree = treecpy(ml_tree, &best_tree_vec, &best_losses_vec, SIGMA, N);
+            for (int i = 0; i < N; i++) { best_sigma[i] = SIGMA[i]; }
+        }
+
+        vector_free(&tree_nodes);
+        destroy_tree(root);
+        destroy_tree(ml_tree);
+    }
    
     
 //    fprint_tree_leaves(ml_tree, TREE, SIGMA, N, OUT_PATH);
-    print_tree(ml_tree);
+    printf("Most likelihood tree found:\n");
+    print_tree(best_tree);
+    fprint_tree(best_tree, OUT_PATH);
     
     printf("Cell assigment:\n");
     for (int i=0; i<N;i++) {
-        printf("%d ", SIGMA[i]);
+        printf("%d ", best_sigma[i]);
     }
     printf("\n");
 
-//    int gtp[M];
-//    for (int j = 0; j < M; j++) {
-//            gtp[j] = 0;
-//        }
-//
-//        get_genotype_profile(vector_get(&tree_nodes, SIGMA[32]), gtp);
-//
-//    printf("Genotype profile of cell32:\n");
-//    for (int j = 0; j < M; j++) {
-//        printf("%d ", gtp[j]);
-//    }
-//    printf("\n");
+
 
     return 0;
 }
