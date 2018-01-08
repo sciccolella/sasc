@@ -3,7 +3,7 @@
 # Start simulations
 
 # General settings
-SUBCLONES=7
+SUBCLONES=4
 MUTATIONS=20
 CELLS=100
 FN=0.3
