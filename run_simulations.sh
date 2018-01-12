@@ -6,10 +6,12 @@
 SUBCLONES=4
 MUTATIONS=20
 CELLS=100
-FN=0.3
-FP=0.0001
-NA=0.15
-DIR="data/simulated/subclones_$SUBCLONES-m_$MUTATIONS-n_$CELLS-fn_$FN-fp_$FP-na_$NA"
+#FN=0.3
+#FP=0.0001
+#NA=0.15
+#DIR="data/simulated/subclones_$SUBCLONES-m_$MUTATIONS-n_$CELLS-fn_$FN-fp_$FP-na_$NA"
+EXPERIMENT=2
+DIR="data/simulated/exp$EXPERIMENT"
 
 CORES=16
 
