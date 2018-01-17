@@ -24,6 +24,8 @@ int main (int argc, char **argv)
     double ALPHA = arguments->alpha;
     double BETA = arguments->beta;
 
+    int MAX_LOSSES = 3;
+
     char OUT_PATH[255];
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
 
@@ -152,7 +154,7 @@ int main (int argc, char **argv)
         double lh = tree_loglikelihood(root, tree_nodes, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
         printf("Start log-like: %lf\n", lh);
         double current_lh = 0;
-        node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, &current_lh);
+        node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, &current_lh, MAX_LOSSES);
         printf("Maximum log-likelihood: %lf\n", current_lh);
 
         if (current_lh > best_loglike) {
@@ -172,6 +174,8 @@ int main (int argc, char **argv)
         vector_free(&tree_nodes);
         destroy_tree(root);
         destroy_tree(ml_tree);
+
+        print_tree(best_tree);
     }
    
     

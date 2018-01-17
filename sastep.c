@@ -57,9 +57,12 @@ prune_regraft(node_t *prune, node_t *regraft, node_t *root) {
 }
 
 int
-add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss, vector *losses_vec) {
+add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss, vector *losses_vec, int MAX_LOSSES) {
     node_t *par = node->parent;
     if (par == NULL || par->parent == NULL)
+        return 1;
+
+    if (vector_total(losses_vec) >= MAX_LOSSES)
         return 1;
 
     // Walk to root to select possible candidates for deletion
@@ -185,7 +188,7 @@ tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, in
 }
 
 void
-neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss) {
+neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss, int MAX_LOSSES) {
     double move = genrand_real1();
     // printf("%lf,", move);
 
@@ -197,7 +200,7 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
         int ip = random_assignment(vector_total(tree_vec) - 1);
         node_res = vector_get(tree_vec, ip);
 
-        bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec);
+        bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec, MAX_LOSSES);
 
         if (bm_res == 0) {
             check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
@@ -278,7 +281,7 @@ accept_prob(double old_lh, double new_lh, double current_temp) {
 }
 
 node_t *
-anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double alpha, double beta,  int **inmatrix, double start_temp, double cooling_rate, double min_temp, double *best_lh) {
+anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double alpha, double beta,  int **inmatrix, double start_temp, double cooling_rate, double min_temp, double *best_lh, int MAX_LOSSES) {
     double current_temp = start_temp;
 
     // Vector of node indices
@@ -336,7 +339,7 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
         assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
 
 
-        neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss);
+        neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES);
 //        fflush(stdout);
 
 //        for (int i = 0; i < vector_total(&copy_tree_vec); i++) {

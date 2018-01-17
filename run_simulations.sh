@@ -28,6 +28,7 @@ do
 
     ./sasc -i $FILE -m $MUTATIONS -n $CELLS -a $SASC_FN -b $SASC_FP -k $SASC_K &
 
+
     if [ $(($ID % $CORES)) -eq "0" ]; then
         wait
     fi
