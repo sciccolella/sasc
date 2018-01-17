@@ -110,7 +110,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:k:i:e:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:k:i:e:d:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
