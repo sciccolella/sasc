@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 #include "utils.h"
 #include "mt19937ar.h"
 
@@ -99,6 +100,8 @@ get_arguments(int cargc, char **cargsv) {
 
     args_t *arguments = malloc(sizeof(args_t));
 
+    arguments->max_del = INT_MAX;
+
     strcpy(arguments->mut_file, "NULL");
     int inserted_args = 0;
 
@@ -138,6 +141,9 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'h':
                 print_help();
+                break;
+            case 'd':
+                arguments->max_del = atoi(optarg);
                 break;
             case 'V':
                 printf("%s\n", argp_program_version);

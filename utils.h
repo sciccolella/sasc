@@ -3,6 +3,7 @@ typedef struct Arguments {
     int n;
     int m;
     int k;
+    int max_del;
     double alpha;
     double beta;
     char mut_file[255];

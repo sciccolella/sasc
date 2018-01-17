@@ -3,7 +3,7 @@
 #include <string.h>
 #include "mt19937ar.h"
 #include <time.h>
-#include <assert.h>
+#include <limits.h>
 #include <float.h>
 #include "tree.h"
 #include "utils.h"
@@ -24,7 +24,7 @@ int main (int argc, char **argv)
     double ALPHA = arguments->alpha;
     double BETA = arguments->beta;
 
-    int MAX_LOSSES = 3;
+    int MAX_LOSSES = arguments->max_del;
 
     char OUT_PATH[255];
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
