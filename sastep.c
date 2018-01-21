@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
-#include <float.h>
 #include "vector.h"
 #include "tree.h"
 #include "sastep.h"
@@ -152,75 +151,37 @@ prob(int I, int E, double alpha, double beta){
     return p;
 }
 
-//double
-//tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double alpha, double beta) {
-//    double lh = 0;
-//    int gtp[m];
-//
-//    // for (int i=0; i<n;i++) {
-//    //     printf("%d,", sigma[i]);
-//    // }
-//    // printf("\n");
-//    // print_tree(root);
-//
-//    for (int i = 0; i < n; i++) {
-//
-//
-//        for (int j = 0; j < m; j++) {
-//            gtp[j] = 0;
-//        }
-////        printf("cell: %d, sigma: %d\n", i, sigma[i]);
-//        node_t *node = vector_get(&tree_vec, sigma[i]);
-//        assert(node != NULL);
-//        get_genotype_profile(vector_get(&tree_vec, sigma[i]), gtp);
-//
-////        for (int j = 0; j < m; j++) {
-////            printf("%d ", gtp[j]);
-////        }
-////        printf("\n");
-//
-//        for (int j = 0; j < m; j++) {
-//            double p = prob(inmatrix[i][j], gtp[j], alpha, beta);
-//            lh += log(p);
-//        }
-//    }
-//
-//    return lh;
-//}
-
 double
 tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double alpha, double beta) {
     double lh = 0;
     int gtp[m];
 
+    // for (int i=0; i<n;i++) {
+    //     printf("%d,", sigma[i]);
+    // }
+    // printf("\n");
+    // print_tree(root);
+    
     for (int i = 0; i < n; i++) {
-        double max_cell_lh = -DBL_MAX;
-        int max_cell_node = -1;
-
-        for (int node_id = 0; node_id < vector_total(&tree_vec); node_id++) {
-
-            double curr_lh = 0;
-
-            for (int j = 0; j < m; j++) {
-                gtp[j] = 0;
-            }
-
-            node_t *node = vector_get(&tree_vec, node_id);
-            assert(node != NULL);
-            get_genotype_profile(node, gtp);
-
-            for (int j = 0; j < m; j++) {
-                double p = prob(inmatrix[i][j], gtp[j], alpha, beta);
-                curr_lh += log(p);
-            }
-
-            if (curr_lh > max_cell_lh) {
-                max_cell_lh = curr_lh;
-                max_cell_node = node_id;
-            }
+        
+        
+        for (int j = 0; j < m; j++) {
+            gtp[j] = 0;
         }
-        sigma[i] = max_cell_node;
-        lh += max_cell_lh;
+//        printf("cell: %d, sigma: %d\n", i, sigma[i]);
+        node_t *node = vector_get(&tree_vec, sigma[i]);
+        assert(node != NULL);
+        get_genotype_profile(vector_get(&tree_vec, sigma[i]), gtp);
+
+//        for (int j = 0; j < m; j++) {
+//            printf("%d ", gtp[j]);
+//        }
+//        printf("\n");
+
+        for (int j = 0; j < m; j++) {
+            double p = prob(inmatrix[i][j], gtp[j], alpha, beta);
+            lh += log(p);
+        }
     }
 
     return lh;
@@ -263,13 +224,13 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
 #ifdef DEBUG
             printf("\tDELETE BACK-MUT: %s (id: %d)\n", node_res->label, node_res->id);
 #endif
-//        } else if (move <= 0.65){
-//            // Change assigment
-//            int rand_cell = random_assignment(n);
-//
-//            int node_max = vector_total(tree_vec) - 1;
-//            assert(node_max > 0);
-//            sigma[rand_cell] = random_assignment(node_max);
+        } else if (move <= 0.65){
+            // Change assigment
+            int rand_cell = random_assignment(n);
+
+            int node_max = vector_total(tree_vec) - 1;
+            assert(node_max > 0);
+            sigma[rand_cell] = random_assignment(node_max);
         } else {
             // switch nodes
             node_t *u = NULL;
@@ -307,17 +268,17 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
             check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
         }
     } else {
-//        if (move < 0.5) {
-//            // Change assigment
-//            int rand_cell = random_assignment(n);
-//
-//            int node_max = vector_total(tree_vec) - 1;
-//            assert(node_max > 0);
-//            sigma[rand_cell] = random_assignment(node_max);
-//#ifdef DEBUG
-//            printf("\tASS: cell: %d, tot: %d, ass: %d\n", rand_cell, node_max, sigma[rand_cell]);
-//#endif
-//        } else {
+        if (move < 0.5) {
+            // Change assigment
+            int rand_cell = random_assignment(n);
+
+            int node_max = vector_total(tree_vec) - 1;
+            assert(node_max > 0);
+            sigma[rand_cell] = random_assignment(node_max);
+#ifdef DEBUG
+            printf("\tASS: cell: %d, tot: %d, ass: %d\n", rand_cell, node_max, sigma[rand_cell]);
+#endif
+        } else {
             // Prune-regraft two random nodes
             int pr_res = 1;
             node_t *prune_res = NULL;
@@ -348,7 +309,7 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
                 prune_res = prune;
             }
             check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
-//        }
+        }
     }
 }
 
@@ -500,7 +461,7 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
             current_temp *= (1 - cooling_rate);
 
             ++step;
-            if (step % 1000 == 0 || step == 1) {
+            if (step % 100000 == 0 || step == 1) {
                 printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
                 // print_tree(current_root);
             }
