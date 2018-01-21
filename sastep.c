@@ -206,9 +206,7 @@ tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, in
             }
 
             node_t *node = vector_get(&tree_vec, node_id);
-            if (node == NULL) {
-                continue;
-            }
+            assert(node != NULL);
             get_genotype_profile(node, gtp);
 
             for (int j = 0; j < m; j++) {
