@@ -45,7 +45,7 @@ char
 void
 import_input(int **input_matrix, int rows, int columns, char *path){
     FILE *fp;
-    char buff[rows*2 + 10];
+    char buff[columns*2 + 10];
 
     char seps[] = " ,\t";
     char *token;
@@ -69,7 +69,6 @@ import_input(int **input_matrix, int rows, int columns, char *path){
             token = strtok(NULL, seps);
             j++;
         }
-        
         
 
         i++;
