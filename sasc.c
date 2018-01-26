@@ -5,6 +5,7 @@
 #include <time.h>
 #include <limits.h>
 #include <float.h>
+#include <assert.h>
 #include "tree.h"
 #include "utils.h"
 #include "sastep.h"
@@ -175,7 +176,7 @@ int main (int argc, char **argv)
         destroy_tree(root);
         destroy_tree(ml_tree);
 
-        print_tree(best_tree);
+//        print_tree(best_tree);
     }
    
     
@@ -190,6 +191,27 @@ int main (int argc, char **argv)
     }
     printf("\n");
 
+    char OUT_MATRIX[255];
+    sprintf(OUT_MATRIX, "%s_out.txt", remove_extension(arguments->infile));
+
+    FILE *fp;
+    fp = fopen(OUT_MATRIX, "w+");
+    int gtp[M];
+
+    for (int i=0; i<N;i++) {
+        for (int j = 0; j < M; j++) { gtp[j] = 0; }
+
+        node_t *node = vector_get(&best_tree_vec, best_sigma[i]);
+        assert(node != NULL);
+        get_genotype_profile(vector_get(&best_tree_vec, best_sigma[i]), gtp);
+
+        for (int j = 0; j < M; j++) {
+            fprintf(fp, "%d ", gtp[j]);
+        }
+        fprintf(fp, "\n");
+
+    }
+    fclose(fp);
 
 
     return 0;
