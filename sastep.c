@@ -388,16 +388,6 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
 
 
             neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES, phase);
-//        fflush(stdout);
-
-//        for (int i = 0; i < vector_total(&copy_tree_vec); i++) {
-//            node_t *n = vector_get(&copy_tree_vec, i);
-////            printf("nodecheck: %d: lab: %s id: %d\n", i, n->label, n->id);
-//            if (n != NULL)
-//            assert(n->id == i);
-//        }
-//        print_tree(copy_root);
-//        print_tree(current_root);
 
 #ifdef DEBUG
             printf("neigh\n");
@@ -467,7 +457,7 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
             }
 
         }
-        print_tree(current_root);
+        // print_tree(current_root);
     }
 
     *best_lh = current_lh;

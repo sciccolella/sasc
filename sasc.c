@@ -30,15 +30,6 @@ int main (int argc, char **argv)
     char OUT_PATH[255];
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
 
-  /* Print argument values */
-//    printf("n: %d\n", N);
-//    printf("m: %d\n", M);
-//    printf("k: %d\n", K);
-//    printf("a: %f\n", ALPHA);
-//    printf("b: %f\n", BETA);
-//    printf("i: %s\n", arguments->infile);
-//    printf("e: %s\n", arguments->mut_file);
-
     printf("Starting SASC.\n");
 
     // Set random seed
@@ -175,8 +166,7 @@ int main (int argc, char **argv)
         vector_free(&tree_nodes);
         destroy_tree(root);
         destroy_tree(ml_tree);
-
-//        print_tree(best_tree);
+        
     }
    
     
