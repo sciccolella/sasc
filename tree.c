@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+#include "vector.h"
 
 node_t *
 node_new(char *label, int mut_index, int id) {
@@ -83,23 +84,17 @@ node_detach(node_t *node) {
         } else
             node->parent->first_child = NULL;
     } else {
-        // printf("else\n");
-        // printf("prev: %s, next: %s\n", node->previous_sibling->label, node->next_sibling->label);
         node->previous_sibling->next_sibling = node->next_sibling;
         node->next_sibling->previous_sibling = node->previous_sibling;
         node->previous_sibling = NULL;
         node->next_sibling = NULL;
     }
-//     node->parent = NULL;
 }
 
 void
 node_delete(node_t *node, vector * tree_vec, vector *loss_vec, int *k_loss, int *sigma, int n) {
     
     node_t *par = node->parent;
-#ifdef DEBUG
-    printf("----------------------DELETE NODE: label: %s, id: %d\n", node->label, node->id);
-#endif
 
     node_detach(node);
 
@@ -141,8 +136,6 @@ node_delete(node_t *node, vector * tree_vec, vector *loss_vec, int *k_loss, int 
         node_t *ns = child->next_sibling;
 
         node_detach(child);
-//        printf("del_child\n");
-//        print_tree(child);
         node_append(par, child);
 
         child = ns;
@@ -184,20 +177,20 @@ destroy_tree(node_t *node){
    printf("%s\n", "}");
  }
 
-void
-print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX) {
-    printf("%s\n", "digraph g {");
-    print_tree_rec(root);
+// void
+// print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX) {
+//     printf("%s\n", "digraph g {");
+//     print_tree_rec(root);
 
-    for (int i = 0; i < MAX; i++) {
-        printf("\t\"%s\" -> cell%d;\n",
-                    tree[leaves[i]]->label, i+1);
-        printf("\tcell%d [shape=box]\n", i+1);
-    }
+//     for (int i = 0; i < MAX; i++) {
+//         printf("\t\"%s\" -> cell%d;\n",
+//                     tree[leaves[i]]->label, i+1);
+//         printf("\tcell%d [shape=box]\n", i+1);
+//     }
 
-    printf("}\n");
+//     printf("}\n");
 
-}
+// }
 
 void
 fprint_tree_rec(node_t *node, FILE *fo) {
@@ -230,7 +223,7 @@ fprint_tree(node_t *root, char *outpath) {
 }
 
 void
-fprint_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX, char *outpath) {
+fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *outpath) {
     FILE *fp;
     fp = fopen(outpath, "w+");
 
@@ -238,8 +231,9 @@ fprint_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX, char *ou
     fprint_tree_rec(root, fp);
 
     for (int i = 0; i < MAX; i++) {
+        node_t *node = vector_get(tree_vec, sigma[i]);
         fprintf(fp, "\t\"%s\" -> cell%d;\n",
-                    tree[leaves[i]]->label, i+1);
+                    node->label, i+1);
         fprintf(fp, "\tcell%d [shape=box]\n", i+1);
     }
 
@@ -249,12 +243,8 @@ fprint_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX, char *ou
 }
 
 void get_genotype_profile(node_t *node, int genotype[]) {
-//    printf("gtp: %p\n", node);
     if (node->mut_index == -1)
         return;
-
-    // printf("%s, %d - ", node->label, node->mut_index);
-
     if (node->loss == 0)
         genotype[node->mut_index] += 1;
     else
@@ -298,11 +288,9 @@ rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec, vector *losses_vec, i
         if (new_id != child->id) {
             for (int i =0; i < n; i++) {
                 if (sigma[i] == child->id && !changed_mask[i]) {
-//                    printf("i: %d, sigma(i): %d, child->id: %d, new_id: %d\n", i, sigma[i], child->id, new_id);
                     sigma[i] = new_id;
                     changed_mask[i] = true;
                 } else {
-//                    printf("i: %d, sigma(i): %d - NO CHANGE\n", i, sigma[i]);
                 }
             }
         }
@@ -359,11 +347,9 @@ treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int sigma[], int n) 
         if (new_id != child->id) {
             for (int i =0; i < n; i++) {
                 if (sigma[i] == child->id && !changed_mask[i]) {
-//                    printf("i: %d, sigma(i): %d, child->id: %d, new_id: %d\n", i, sigma[i], child->id, new_id);
                     sigma[i] = new_id;
                     changed_mask[i] = true;
                 } else {
-//                    printf("i: %d, sigma(i): %d - NO CHANGE\n", i, sigma[i]);
                 }
 
             }

@@ -89,7 +89,7 @@ void fprint_tree(node_t *root, char *outpath);
  * @param MAX Number of cells
  * @param outpath Path to output file
  */
-void fprint_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX, char *outpath);
+void fprint_tree_leaves(node_t *root, vector *tree_vec, int leaves[], int MAX, char *outpath);
 
 /**
  * @brief Get the genotype profile of the selected node

@@ -1,8 +1,10 @@
-Simulated Annealing Single-Cell (SASC) -- cancer progression inference
+Simulated Annealing Single Cell inference (SASC) tool -- cancer progression inference
 ===================
 
-Work In progress
-================
+SASC is  a new model and a robust framework based on Simulated Annealing for the inference of cancer progression from the SCS data.
+The main objective is to overcome the limitations of the Infinite Sites Assumption by introducing a version of the k-Dollo parsimony model which indeed allows the deletion of mutations from the evolutionary history of the tumor. 
+
+<!-- A detailed description of the framework can be found in published version of the paper [Inferring Cancer Progression from Single Cell Sequencing while allowing loss of mutations](#). -->
 
 Compile
 --------
@@ -53,6 +55,10 @@ Parameters
 **Optional**
 - `-d DELETIONS`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
 - `-e MUTATION_NAME_FILE`: Path of the input file. If this parameter is not used then the mutation will be named progressively from `1` to `MUTATIONS`
+- `-r REPETITIONS`: Set the total number of Simulated Annealing repetitions. Default is 5.
+- `-l`: If this option is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present.
+- `-x`: If this option is use, SASC will also output the expected matrix E.
+
 
 **Simulated Annealing parameters**
 
@@ -68,7 +74,19 @@ The previous parameters are empirically found to be optimal, therefore we recomm
 
 Output
 ---------
-Work In progress.
+SASC has three different output formats that can be toggled with different arguments.
+
+**Mutational Tree**
+
+This is the standard output; SASC will generate a mutational tree in DOT format with no cells attached as leaves of the tree. An example of this output is shown in [Simulation mutational tree](data/results/simulation_scs_mlt.gv)
+
+**Mutational Tree with cells as leaves**
+
+By toggling option `-l` SASC will instead output a mutational tree in DOT format with cells attached as leaves of the tree. An example can be found at [Simulation mutational tree with cells](data/results/simulation_scs_mlt_cells.gv)
+
+**Expected Matrix**
+
+In addition to the previous formats SASC can output the expected matrix *E* such in [Simulation expected matrix](data/results/simulation_scs_out.txt)
 
 Run SASC
 --------

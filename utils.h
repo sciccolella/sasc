@@ -7,6 +7,9 @@ typedef struct Arguments {
     double alpha;
     double beta;
     char mut_file[255];
+    int print_leaves;
+    int print_expected;
+    int repetitions;
 } args_t;
 
 void shuffle(int *array, int n);

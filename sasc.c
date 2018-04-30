@@ -92,11 +92,13 @@ int main (int argc, char **argv)
     import_input(INPUT_MATRIX, N, M, arguments->infile);
 
 
-    double START_TEMP = 100000.0;
+    // double START_TEMP = 100000.0;
+    double START_TEMP = 10.0;
     double COOLING_RATE = 0.00001;
-    double MIN_TEMP = 0.0001;
-    int REPETITIONS = 5;
-    node_t *best_tree;
+    // double MIN_TEMP = 0.0001;
+    double MIN_TEMP = 1;
+    int REPETITIONS = arguments->repetitions;
+    node_t *best_tree = NULL;
     double best_loglike = -DBL_MAX;
     int best_sigma[N]; for (int i = 0; i < N; i++) { best_sigma[i] = 0; }
     vector best_tree_vec;
@@ -170,10 +172,15 @@ int main (int argc, char **argv)
     }
    
     
-//    fprint_tree_leaves(ml_tree, TREE, SIGMA, N, OUT_PATH);
+    if (arguments->print_leaves == 1) {
+        fprint_tree_leaves(best_tree, &best_tree_vec, best_sigma, N, OUT_PATH);
+    } else {
+        fprint_tree(best_tree, OUT_PATH);
+    }
+    
     printf("Most likelihood tree found:\n");
     print_tree(best_tree);
-    fprint_tree(best_tree, OUT_PATH);
+    
     
     printf("Cell assigment:\n");
     for (int i=0; i<N;i++) {
@@ -181,27 +188,29 @@ int main (int argc, char **argv)
     }
     printf("\n");
 
-    char OUT_MATRIX[255];
-    sprintf(OUT_MATRIX, "%s_out.txt", remove_extension(arguments->infile));
+    if (arguments->print_expected == 1) {
+        char OUT_MATRIX[255];
+        sprintf(OUT_MATRIX, "%s_out.txt", remove_extension(arguments->infile));
 
-    FILE *fp;
-    fp = fopen(OUT_MATRIX, "w+");
-    int gtp[M];
+        FILE *fpo;
+        fpo = fopen(OUT_MATRIX, "w+");
+        int gtpo[M];
 
-    for (int i=0; i<N;i++) {
-        for (int j = 0; j < M; j++) { gtp[j] = 0; }
+        for (int i=0; i<N;i++) {
+            for (int j = 0; j < M; j++) { gtpo[j] = 0; }
 
-        node_t *node = vector_get(&best_tree_vec, best_sigma[i]);
-        assert(node != NULL);
-        get_genotype_profile(vector_get(&best_tree_vec, best_sigma[i]), gtp);
+            node_t *node = vector_get(&best_tree_vec, best_sigma[i]);
+            assert(node != NULL);
+            get_genotype_profile(vector_get(&best_tree_vec, best_sigma[i]), gtpo);
 
-        for (int j = 0; j < M; j++) {
-            fprintf(fp, "%d ", gtp[j]);
+            for (int j = 0; j < M; j++) {
+                fprintf(fpo, "%d ", gtpo[j]);
+            }
+            fprintf(fpo, "\n");
+
         }
-        fprintf(fp, "\n");
-
+        fclose(fpo);
     }
-    fclose(fp);
 
 
     return 0;

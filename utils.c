@@ -89,17 +89,21 @@ print_help() {
     printf("\t-i INFILE\t\tPath of the input file.\n");
 
     printf("\vOptional arguments:\n");
+    printf("\t-d DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
     exit(EXIT_SUCCESS);
 }
 
 args_t*
 get_arguments(int cargc, char **cargsv) {
-    char *argp_program_version = "SACS -- version: 0.1";
+    char *argp_program_version = "SACS -- version: 1.3";
 
     args_t *arguments = malloc(sizeof(args_t));
 
     arguments->max_del = INT_MAX;
+    arguments->print_leaves = 0;
+    arguments->print_expected = 0;
+    arguments->repetitions = 5;
 
     strcpy(arguments->mut_file, "NULL");
     int inserted_args = 0;
@@ -109,7 +113,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:k:i:e:d:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:k:i:e:d:lxr:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -143,6 +147,15 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'd':
                 arguments->max_del = atoi(optarg);
+                break;
+            case 'l':
+                arguments->print_leaves = 1;
+                break;
+            case 'x':
+                arguments->print_expected = 1;
+                break;
+            case 'r':
+                arguments->repetitions = atoi(optarg);
                 break;
             case 'V':
                 printf("%s\n", argp_program_version);
