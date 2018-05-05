@@ -92,10 +92,11 @@ int main (int argc, char **argv)
     import_input(INPUT_MATRIX, N, M, arguments->infile);
 
 
-    // double START_TEMP = 100000.0;
-    double START_TEMP = 10.0;
-    double COOLING_RATE = 0.00001;
-    // double MIN_TEMP = 0.0001;
+    double START_TEMP = 100000.0;
+    double MIN_TEMP = 0.0001;
+    // These two are for debug purposes    
+    // double START_TEMP = 10.0;
+    // double COOLING_RATE = 0.00001;
     double MIN_TEMP = 1;
     int REPETITIONS = arguments->repetitions;
     node_t *best_tree = NULL;
