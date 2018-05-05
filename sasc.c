@@ -95,8 +95,9 @@ int main (int argc, char **argv)
     double START_TEMP = 100000.0;
     double COOLING_RATE = 0.00001;    
     double MIN_TEMP = 0.0001;
-    // This is for debug purposes    
+    // Thiese three are for debug purposes    
     // double START_TEMP = 10.0;
+    // double COOLING_RATE = 0.01;
     // double MIN_TEMP = 1;
     int REPETITIONS = arguments->repetitions;
     node_t *best_tree = NULL;

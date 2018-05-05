@@ -65,10 +65,9 @@ Parameters
 Although we do not recommend to change these parameters it is possible to modify them by accessing the source code.
 Following is a list of the parameters used for the simulated annealing process and their position in the code.
 
-- `START_TEMP - (line: sasc.c -> 95)`: set by default to `100000` is the starting temperature of the simulated annealing algorithm.
-- `COOLING_RATE - (line: sasc.c -> 96)`: set by default  to `0.00001` is the rate of which the initial temperature decrease at each iteration.
-- `MIN_TEMP - (line: sasc.c -> 97)`: set by default  to `0.0001` is the temperature at which the simulated annealing algorithm stops and return the best solution found.
-- `REPETITIONS - (line: sasc.c -> 98)`: set by default  to `5` is the number of repetitions that the simulated annealing algorithm performs. The best solution is therefore the most likely from the best solutions returned by the repetitions.
+- `START_TEMP`: set by default to `100000` is the starting temperature of the simulated annealing algorithm.
+- `COOLING_RATE`: set by default  to `0.00001` is the rate of which the initial temperature decrease at each iteration.
+- `MIN_TEMP`: set by default  to `0.0001` is the temperature at which the simulated annealing algorithm stops and return the best solution found.
 
 The previous parameters are empirically found to be optimal, therefore we recommend to not change them but instead to try different values of `ALPHA`, `BETA` and `DOLLO(K)`.
 
