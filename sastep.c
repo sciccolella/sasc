@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
+#include <float.h>
 #include "vector.h"
 #include "tree.h"
 #include "sastep.h"
@@ -21,16 +23,10 @@ check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec, int *k_lo
 
     check_subtree_losses(node->first_child, tree_vec, loss_vec, k_loss, sigma, n);
     check_subtree_losses(node->next_sibling, tree_vec, loss_vec, k_loss, sigma, n);
-//    printf("%s\n", node->label);
 
     if (node->loss == 1){
         bool valid = is_loss_valid(node);
         bool lost = is_already_lost(node, node->mut_index);
-
-#ifdef DEBUG
-        printf("valid: %s\n", valid ? "true" : "false");
-        printf("lost: %s\n", lost ? "true" : "false");
-#endif
 
         if (valid == false || lost == true) {
             node_delete(node, tree_vec, loss_vec, k_loss, sigma, n);
@@ -173,6 +169,62 @@ tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, in
     return lh;
 }
 
+double
+greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double alpha, double beta) {
+    double lh = 0;
+    int node_max = vector_total(&tree_vec) - 1;
+
+    int nodes_genotypes[node_max][m];
+
+    for (int i = 0; i < node_max; i++) {
+        for (int j = 0; j < m; j++) {
+            nodes_genotypes[i][j] = 0;
+        }
+
+        node_t *node = vector_get(&tree_vec, i);
+
+        if (node == NULL) {
+            for (int j = 0; j < m; j++) {
+                // printf("NULL gtp: %d\n",i);
+                nodes_genotypes[i][j] = 3;
+            }
+        } else {
+            get_genotype_profile(node, nodes_genotypes[i]);
+        }
+    }
+
+    double maximum_likelihood = 0;
+
+    for (int i = 0; i < n; i++) {
+        int best_sigma = -1;
+        double best_lh = -DBL_MAX;
+
+        for (int node = 0; node < node_max; node++){
+            if (nodes_genotypes[node][0] != 3) {
+                double lh = 0;
+
+                for (int j = 0; j < m; j++) {
+                    double p = prob(inmatrix[i][j], nodes_genotypes[node][j], alpha, beta);
+                    lh += log(p);
+                }
+
+                if (lh > best_lh) {
+                    best_sigma = i;
+                    best_lh = lh;
+                }
+            } else {
+                // printf("NULL ass: %d\n", node);
+            }
+        }
+
+        sigma[i] = best_sigma;
+        maximum_likelihood += best_lh;
+        // printf("ASS: i:%d --- sigma:%d --- lh%f\n",i, best_sigma, best_lh);
+    }
+    
+    return maximum_likelihood;
+}
+
 void
 neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss, int MAX_LOSSES, int phase) {
     double move = genrand_real1();
@@ -206,11 +258,12 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
 
         } else if (move <= 0.65){
             // Change assigment
-            int rand_cell = random_assignment(n);
 
-            int node_max = vector_total(tree_vec) - 1;
-            assert(node_max > 0);
-            sigma[rand_cell] = random_assignment(node_max);
+            // int rand_cell = random_assignment(n);
+
+            // int node_max = vector_total(tree_vec) - 1;
+            // assert(node_max > 0);
+            // sigma[rand_cell] = random_assignment(node_max);
         } else {
             // switch nodes
             node_t *u = NULL;
@@ -248,11 +301,12 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
     } else {
         if (move < 0.5) {
             // Change assigment
-            int rand_cell = random_assignment(n);
 
-            int node_max = vector_total(tree_vec) - 1;
-            assert(node_max > 0);
-            sigma[rand_cell] = random_assignment(node_max);
+            // int rand_cell = random_assignment(n);
+
+            // int node_max = vector_total(tree_vec) - 1;
+            // assert(node_max > 0);
+            // sigma[rand_cell] = random_assignment(node_max);
 
         } else {
             // Prune-regraft two random nodes
@@ -296,6 +350,7 @@ accept_prob(double old_lh, double new_lh, double current_temp) {
 node_t *
 anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double alpha, double beta,  int **inmatrix, double start_temp, double cooling_rate, double min_temp, double *best_lh, int MAX_LOSSES) {
     double current_temp = start_temp;
+    double current_cooling_rate = cooling_rate;
 
     // Vector of node indices
     vector current_tree_vec;
@@ -316,17 +371,20 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
 
     unsigned int step = 0;
 
+    unsigned int MAX_STEP = 100000;
+    // unsigned int ITERATIONS_PER_
+
     double current_lh = tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix, n, m, alpha, beta);
 
-    unsigned int not_changing_solution = 0;
+    // unsigned int not_changing_solution = 0;
 
     for (int phase = 1; phase <= 2; phase++) {
         if (phase == 2) {
             current_temp = start_temp;
-            cooling_rate = 0.0001;
+            current_cooling_rate = cooling_rate;
         }
         printf("Current phase: %d\nCurrent step\t\tCurrent loglikelihood\t\tCurrent temperature\n", phase);
-        while (current_temp > min_temp && not_changing_solution < 200000) {
+        while (current_temp > min_temp) {
             // Create a modifiable copy
             vector copy_tree_vec;
             vector_init(&copy_tree_vec);
@@ -351,7 +409,9 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
 
             neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES, phase);
 
-            double new_lh = tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
+            double new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
+
+
             double acceptance = accept_prob(current_lh, new_lh, current_temp);
             double p = genrand_real1();
 
@@ -371,9 +431,6 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
                 for (int i = 0; i < n; i++) { current_sigma[i] = copy_sigma[i]; }
 
                 current_root = treecpy(copy_root, &current_tree_vec, &current_losses_vec, current_sigma, n);
-                not_changing_solution = 0;
-            } else {
-                not_changing_solution++;
             }
 
             // Destroy neighbor
@@ -382,10 +439,15 @@ anneal(node_t *root, int sigma[], vector tree_vec, int n, int m, int k, double a
             vector_free(&copy_losses_vec);
 
 
-            current_temp *= (1 - cooling_rate);
+            
+            if (current_temp <= 0.25 * start_temp) {
+                current_temp *= (1 - (current_cooling_rate * 0.1));
+            } else {
+                current_temp *= (1 - current_cooling_rate);
+            }
 
             ++step;
-            if (step % 100000 == 0 || step == 1) {
+            if (step % 1000 == 0 || step == 1) {
                 printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
             }
 

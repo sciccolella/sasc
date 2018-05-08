@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <float.h>
 #include <assert.h>
+#include <math.h>
 #include "tree.h"
 #include "utils.h"
 #include "sastep.h"
@@ -95,10 +96,11 @@ int main (int argc, char **argv)
     double START_TEMP = 100000.0;
     double COOLING_RATE = 0.00001;    
     double MIN_TEMP = 0.0001;
-    // Thiese three are for debug purposes    
-    // double START_TEMP = 10.0;
-    // double COOLING_RATE = 0.01;
-    // double MIN_TEMP = 1;
+    // These three are for debug purposes    
+    START_TEMP = 10000.0;
+    COOLING_RATE = 0.01;
+    MIN_TEMP = 0.001;
+
     int REPETITIONS = arguments->repetitions;
     node_t *best_tree = NULL;
     double best_loglike = -DBL_MAX;
@@ -149,8 +151,8 @@ int main (int argc, char **argv)
         // get log-likelihood
         double lh = tree_loglikelihood(root, tree_nodes, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
         printf("Start log-like: %lf\n", lh);
-        double current_lh = 0;
         node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, &current_lh, MAX_LOSSES);
+        double current_lh = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
         printf("Maximum log-likelihood: %lf\n", current_lh);
 
         if (current_lh > best_loglike) {
@@ -164,7 +166,11 @@ int main (int argc, char **argv)
             vector_init(&best_losses_vec);
 
             best_tree = treecpy(ml_tree, &best_tree_vec, &best_losses_vec, SIGMA, N);
-            for (int i = 0; i < N; i++) { best_sigma[i] = SIGMA[i]; }
+            // for (int i = 0; i < N; i++) { best_sigma[i] = SIGMA[i]; }
+            for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
+            double tlh = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
+            for (int i = 0; i < N; i++) { printf("%d ", best_sigma[i]); } printf("\n");
+            printf("%f\n", tlh);
         }
 
         vector_free(&tree_nodes);
@@ -180,8 +186,9 @@ int main (int argc, char **argv)
         fprint_tree(best_tree, OUT_PATH);
     }
     
-    printf("Most likelihood tree found:\n");
+    printf("Maximum likelihood tree found:\n");
     print_tree(best_tree);
+    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
     
     
     printf("Cell assigment:\n");
@@ -202,6 +209,7 @@ int main (int argc, char **argv)
             for (int j = 0; j < M; j++) { gtpo[j] = 0; }
 
             node_t *node = vector_get(&best_tree_vec, best_sigma[i]);
+            if (node == NULL) printf("i: %d --- sigma: %d", i, best_sigma[i]);
             assert(node != NULL);
             get_genotype_profile(vector_get(&best_tree_vec, best_sigma[i]), gtpo);
 
