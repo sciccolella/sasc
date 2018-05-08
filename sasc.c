@@ -114,11 +114,11 @@ int main (int argc, char **argv)
         printf("Iteration: %d\n", r+1);
 
         // Generate a RANDOM BTREE
-        vector tree_nodes;
-        vector_init(&tree_nodes);
+        vector ml_tree_vec;
+        vector_init(&ml_tree_vec);
 
         node_t *root = node_new("germline", -1, 0);
-        vector_add(&tree_nodes, root);
+        vector_add(&ml_tree_vec, root);
 
         int rantree[M];
         for (int i = 0; i < M; i++) {
@@ -128,15 +128,15 @@ int main (int argc, char **argv)
 
         int app_node = 0;
         for (int i = 0; i < M; i++) {
-            node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
-            vector_add(&tree_nodes, cnode1);
-            node_append(vector_get(&tree_nodes, app_node), cnode1);
+            node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+            vector_add(&ml_tree_vec, cnode1);
+            node_append(vector_get(&ml_tree_vec, app_node), cnode1);
             i += 1;
 
             if (i < M){
-                node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&tree_nodes));
-                vector_add(&tree_nodes, cnode2);
-                node_append(vector_get(&tree_nodes, app_node), cnode2);
+                node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+                vector_add(&ml_tree_vec, cnode2);
+                node_append(vector_get(&ml_tree_vec, app_node), cnode2);
             }
             app_node += 1;
         }
@@ -144,16 +144,25 @@ int main (int argc, char **argv)
         // Generate SIGMA
         int SIGMA[N];
         for (int i = 0; i < N; i++) {
-            SIGMA[i] = random_assignment(M);
+            SIGMA[i] = 0;
         }
 
 
         // get log-likelihood
-        double lh = tree_loglikelihood(root, tree_nodes, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
-        printf("Start log-like: %lf\n", lh);
-        node_t *ml_tree = anneal(root, SIGMA, tree_nodes, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, &current_lh, MAX_LOSSES);
-        double current_lh = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
-        printf("Maximum log-likelihood: %lf\n", current_lh);
+        double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
+        // for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
+        // printf("Start log-like: %lf\n", lh);
+        node_t *ml_tree = anneal(root, ml_tree_vec, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES);
+        
+        vector_free(&ml_tree_vec);
+        vector_init(&ml_tree_vec);
+        vector ml_losses_vec;
+        vector_init(&ml_losses_vec);
+        
+        ml_tree = treecpy(ml_tree, &ml_tree_vec, &ml_losses_vec, N);
+        
+        double current_lh = greedy_tree_loglikelihood(ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
+        // printf("Maximum log-likelihood: %lf\n", current_lh);
 
         if (current_lh > best_loglike) {
             if (best_tree != NULL)
@@ -165,33 +174,28 @@ int main (int argc, char **argv)
             vector_init(&best_tree_vec);
             vector_init(&best_losses_vec);
 
-            best_tree = treecpy(ml_tree, &best_tree_vec, &best_losses_vec, SIGMA, N);
-            // for (int i = 0; i < N; i++) { best_sigma[i] = SIGMA[i]; }
-            for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
-            double tlh = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
-            for (int i = 0; i < N; i++) { printf("%d ", best_sigma[i]); } printf("\n");
-            printf("%f\n", tlh);
+            best_tree = treecpy(ml_tree, &best_tree_vec, &best_losses_vec, N);
         }
 
-        vector_free(&tree_nodes);
+        vector_free(&ml_tree_vec);
         destroy_tree(root);
         destroy_tree(ml_tree);
         
     }
    
-    
+    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);    
+    // printf("Maximum likelihood found: %f\n", best_calculated_likelihood);
+
     if (arguments->print_leaves == 1) {
         fprint_tree_leaves(best_tree, &best_tree_vec, best_sigma, N, OUT_PATH);
     } else {
         fprint_tree(best_tree, OUT_PATH);
     }
     
-    printf("Maximum likelihood tree found:\n");
-    print_tree(best_tree);
-    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);
+    printf("\nMaximum likelihood Tree found: %f\n", best_calculated_likelihood);
+    print_tree(best_tree);    
     
-    
-    printf("Cell assigment:\n");
+    printf("Best cell assigment:\n");
     for (int i=0; i<N;i++) {
         printf("%d ", best_sigma[i]);
     }

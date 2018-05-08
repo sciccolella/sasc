@@ -271,7 +271,7 @@ nodecpy(char *label, int mut_index, int id, int loss) {
 }
 
 void
-rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec, vector *losses_vec, int *sigma, int n, bool changed_mask[]) {
+rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec, vector *losses_vec, int n, bool changed_mask[]) {
     node_t *child = node->first_child;
     if (child == NULL)
         return;
@@ -285,15 +285,15 @@ rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec, vector *losses_vec, i
         if (copy->loss == 1)
             vector_add(losses_vec, copy);
 
-        if (new_id != child->id) {
-            for (int i =0; i < n; i++) {
-                if (sigma[i] == child->id && !changed_mask[i]) {
-                    sigma[i] = new_id;
-                    changed_mask[i] = true;
-                } else {
-                }
-            }
-        }
+        // if (new_id != child->id) {
+        //     for (int i =0; i < n; i++) {
+        //         if (sigma[i] == child->id && !changed_mask[i]) {
+        //             sigma[i] = new_id;
+        //             changed_mask[i] = true;
+        //         } else {
+        //         }
+        //     }
+        // }
 
         node_t *ncheck = vector_get(tree_vec, new_id);
         assert(ncheck->id == new_id);
@@ -302,14 +302,14 @@ rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec, vector *losses_vec, i
         assert(child->mut_index == copy->mut_index);
 
         node_append(cnode, copy);
-        rec_treecpy(child, copy, tree_vec, losses_vec, sigma, n, changed_mask);
+        rec_treecpy(child, copy, tree_vec, losses_vec, n, changed_mask);
 
         child = child->next_sibling;
     }
 }
 
 node_t *
-treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int sigma[], int n) {
+treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int n) {
     if (vector_total(tree_vec) != 0) {
         fprintf(stderr, "ERROR: tree_vec incorrectly initialized in TREECPY.\n");
         exit(EXIT_FAILURE);
@@ -344,21 +344,21 @@ treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int sigma[], int n) 
         if (copy->loss == 1)
             vector_add(losses_vec, copy);
 
-        if (new_id != child->id) {
-            for (int i =0; i < n; i++) {
-                if (sigma[i] == child->id && !changed_mask[i]) {
-                    sigma[i] = new_id;
-                    changed_mask[i] = true;
-                } else {
-                }
+        // if (new_id != child->id) {
+        //     for (int i =0; i < n; i++) {
+        //         if (sigma[i] == child->id && !changed_mask[i]) {
+        //             sigma[i] = new_id;
+        //             changed_mask[i] = true;
+        //         } else {
+        //         }
 
-            }
-        }
+        //     }
+        // }
 
         assert(child->mut_index == copy->mut_index);
 
         node_append(croot, copy);
-        rec_treecpy(child, copy, tree_vec, losses_vec, sigma, n, changed_mask);
+        rec_treecpy(child, copy, tree_vec, losses_vec, n, changed_mask);
 
         child = child->next_sibling;
     }

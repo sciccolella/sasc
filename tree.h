@@ -107,7 +107,7 @@ void get_genotype_profile(node_t *node, int genotype[]);
  * @param max_id Counter of assigned id -- this will be modified accordingly
  * @return node_t* Pointer to the root of the new tree
  */
-node_t * treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int sigma[], int n);
+node_t * treecpy(node_t *root, vector *tree_vec, vector *losses_vec, int n);
 
 
 void node_detach(node_t *node);
