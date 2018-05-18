@@ -292,92 +292,32 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
             check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
         }
     } else {
-        if (move < 0.25) {
-            // Add back-mutation
-            int bm_res = 1;
-            node_t *node_res = NULL;
-
-            int ip = random_assignment(vector_total(tree_vec) - 1);
-            node_res = vector_get(tree_vec, ip);
-
-            bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec, MAX_LOSSES);
-
-            if (bm_res == 0) {
-                check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-            }
-        } else if (move < 0.50) {
-            // Delete a mutation
-            node_t *node_res = NULL;
-            if (vector_total(loss_vec) == 0)
-                return;
-
-            int node_max = vector_total(loss_vec) - 1;
-            assert(node_max >= 0);
-            int ip = random_assignment(node_max);
-            node_res = vector_get(loss_vec, ip);
-
-            node_delete(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-
-        } else if (move < 0.75) {
-            // switch nodes
-            node_t *u = NULL;
-            while (u == NULL || u->parent == NULL || u->loss == 1) {
+        // Prune-regraft two random nodes
+        int pr_res = 1;
+        node_t *prune_res = NULL;
+        while (pr_res != 0) {
+            node_t *prune = NULL;
+            while (prune == NULL || prune->parent == NULL) {
                 int node_max = vector_total(tree_vec) - 1;
                 assert(node_max > 0);
                 int ip = random_assignment(node_max);
-                u = vector_get(tree_vec, ip);
+                prune = vector_get(tree_vec, ip);
 
             }
 
-            node_t *v = NULL;
-            while (v == NULL || v->parent == NULL || v->loss == 1 || v->id == u->id) {
+            node_t *graft = NULL;
+            while (graft == NULL) {
                 int node_max = vector_total(tree_vec) - 1;
                 assert(node_max > 0);
                 int ig = random_assignment(node_max);
-                v = vector_get(tree_vec, ig);
+                graft = vector_get(tree_vec, ig);
             }
-
-            int mut_tmp;
-            char label_tmp[255];
-
-            mut_tmp = u->mut_index;
-            strcpy(label_tmp, u->label);
-
-            u->mut_index = v->mut_index;
-            strcpy(u->label, v->label);
-
-            v->mut_index = mut_tmp;
-            strcpy(v->label, label_tmp);
-
-            check_subtree_losses(u, tree_vec, loss_vec, k_loss, sigma, n);
-            check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
-        } else {
-            // Prune-regraft two random nodes
-            int pr_res = 1;
-            node_t *prune_res = NULL;
-            while (pr_res != 0) {
-                node_t *prune = NULL;
-                while (prune == NULL || prune->parent == NULL) {
-                    int node_max = vector_total(tree_vec) - 1;
-                    assert(node_max > 0);
-                    int ip = random_assignment(node_max);
-                    prune = vector_get(tree_vec, ip);
-
-                }
-
-                node_t *graft = NULL;
-                while (graft == NULL) {
-                    int node_max = vector_total(tree_vec) - 1;
-                    assert(node_max > 0);
-                    int ig = random_assignment(node_max);
-                    graft = vector_get(tree_vec, ig);
-                }
-                pr_res = prune_regraft(prune, graft, root);
-                prune_res = prune;
-            }
-            check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
+            pr_res = prune_regraft(prune, graft, root);
+            prune_res = prune;
         }
-    }
+        
+        check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
+	}
 }
 
 double
@@ -422,7 +362,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double alpha, double 
 
     // unsigned int not_changing_solution = 0;
 
-    for (int phase = 1; phase <= 1; phase++) {
+    for (int phase = 1; phase <= 2; phase++) {
         if (phase == 2) {
             current_temp = start_temp;
             current_cooling_rate = cooling_rate;
