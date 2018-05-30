@@ -233,7 +233,7 @@ fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *o
     for (int i = 0; i < MAX; i++) {
         node_t *node = vector_get(tree_vec, sigma[i]);
         fprintf(fp, "\t\"%s\" -> cell%d;\n",
-                    node->label, i+1);
+                    node->id, i+1);
         fprintf(fp, "\tcell%d [shape=box]\n", i+1);
     }
 
