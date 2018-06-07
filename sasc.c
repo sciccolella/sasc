@@ -54,8 +54,8 @@ int main (int argc, char **argv)
         }
             
         while (fgets(buff, sizeof buff, fp) != NULL) {
-            // printf("-%s-\n", buff);
             buff[strcspn(buff, "\n")] = '\0';
+            // printf("-%s-\n", buff);
             strcpy(MUT_NAMES[i], buff);
             i++;
         }
@@ -109,13 +109,16 @@ int main (int argc, char **argv)
     vector_init(&best_tree_vec);
     vector best_losses_vec;
     vector_init(&best_losses_vec);
+    
 
     for (int r = 0; r < REPETITIONS; r++) {
         printf("Iteration: %d\n", r+1);
 
         // Generate a RANDOM BTREE
         vector ml_tree_vec;
+        vector ml_losses_vec;
         vector_init(&ml_tree_vec);
+        vector_init(&ml_losses_vec);
 
         node_t *root = node_new("germline", -1, 0);
         vector_add(&ml_tree_vec, root);
@@ -156,7 +159,7 @@ int main (int argc, char **argv)
         
         vector_free(&ml_tree_vec);
         vector_init(&ml_tree_vec);
-        vector ml_losses_vec;
+        vector_free(&ml_losses_vec);
         vector_init(&ml_losses_vec);
         
         ml_tree = treecpy(ml_tree, &ml_tree_vec, &ml_losses_vec, N);
@@ -175,6 +178,7 @@ int main (int argc, char **argv)
             vector_init(&best_losses_vec);
 
             best_tree = treecpy(ml_tree, &best_tree_vec, &best_losses_vec, N);
+            best_loglike = current_lh;
         }
 
         vector_free(&ml_tree_vec);
