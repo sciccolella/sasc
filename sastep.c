@@ -227,70 +227,67 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
 }
 
 void
-neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss, int MAX_LOSSES, int phase) {
+neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss, int MAX_LOSSES) {
     double move = genrand_real1();
+    if (move < 0.25) {
+        // Add back-mutation
+        int bm_res = 1;
+        node_t *node_res = NULL;
 
-    if (phase == 2) {
-        if (move < 0.33) {
-            // Add back-mutation
-            int bm_res = 1;
-            node_t *node_res = NULL;
+        int ip = random_assignment(vector_total(tree_vec) - 1);
+        node_res = vector_get(tree_vec, ip);
 
-            int ip = random_assignment(vector_total(tree_vec) - 1);
-            node_res = vector_get(tree_vec, ip);
+        bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec, MAX_LOSSES);
 
-            bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec, MAX_LOSSES);
-
-            if (bm_res == 0) {
-                check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-            }
-        } else if (move < 0.66) {
-            // Delete a mutation
-            node_t *node_res = NULL;
-            if (vector_total(loss_vec) == 0)
-                return;
-
-            int node_max = vector_total(loss_vec) - 1;
-            assert(node_max >= 0);
-            int ip = random_assignment(node_max);
-            node_res = vector_get(loss_vec, ip);
-
-            node_delete(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-
-        } else {
-            // switch nodes
-            node_t *u = NULL;
-            while (u == NULL || u->parent == NULL || u->loss == 1) {
-                int node_max = vector_total(tree_vec) - 1;
-                assert(node_max > 0);
-                int ip = random_assignment(node_max);
-                u = vector_get(tree_vec, ip);
-
-            }
-
-            node_t *v = NULL;
-            while (v == NULL || v->parent == NULL || v->loss == 1 || v->id == u->id) {
-                int node_max = vector_total(tree_vec) - 1;
-                assert(node_max > 0);
-                int ig = random_assignment(node_max);
-                v = vector_get(tree_vec, ig);
-            }
-
-            int mut_tmp;
-            char label_tmp[255];
-
-            mut_tmp = u->mut_index;
-            strcpy(label_tmp, u->label);
-
-            u->mut_index = v->mut_index;
-            strcpy(u->label, v->label);
-
-            v->mut_index = mut_tmp;
-            strcpy(v->label, label_tmp);
-
-            check_subtree_losses(u, tree_vec, loss_vec, k_loss, sigma, n);
-            check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
+        if (bm_res == 0) {
+            check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
         }
+    } else if (move < 0.50) {
+        // Delete a mutation
+        node_t *node_res = NULL;
+        if (vector_total(loss_vec) == 0)
+            return;
+
+        int node_max = vector_total(loss_vec) - 1;
+        assert(node_max >= 0);
+        int ip = random_assignment(node_max);
+        node_res = vector_get(loss_vec, ip);
+
+        node_delete(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+
+    } else if (move < 0.75) {
+        // switch nodes
+        node_t *u = NULL;
+        while (u == NULL || u->parent == NULL || u->loss == 1) {
+            int node_max = vector_total(tree_vec) - 1;
+            assert(node_max > 0);
+            int ip = random_assignment(node_max);
+            u = vector_get(tree_vec, ip);
+
+        }
+
+        node_t *v = NULL;
+        while (v == NULL || v->parent == NULL || v->loss == 1 || v->id == u->id) {
+            int node_max = vector_total(tree_vec) - 1;
+            assert(node_max > 0);
+            int ig = random_assignment(node_max);
+            v = vector_get(tree_vec, ig);
+        }
+
+        int mut_tmp;
+        char label_tmp[255];
+
+        mut_tmp = u->mut_index;
+        strcpy(label_tmp, u->label);
+
+        u->mut_index = v->mut_index;
+        strcpy(u->label, v->label);
+
+        v->mut_index = mut_tmp;
+        strcpy(v->label, label_tmp);
+
+        check_subtree_losses(u, tree_vec, loss_vec, k_loss, sigma, n);
+        check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
     } else {
         // Prune-regraft two random nodes
         int pr_res = 1;
@@ -315,9 +312,8 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
             pr_res = prune_regraft(prune, graft, root);
             prune_res = prune;
         }
-        
         check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
-	}
+    }
 }
 
 double
@@ -362,95 +358,89 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double alpha, double 
 
     // unsigned int not_changing_solution = 0;
 
-    for (int phase = 1; phase <= 2; phase++) {
-        if (phase == 2) {
-            current_temp = start_temp;
-            current_cooling_rate = cooling_rate;
+    printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
+    while (current_temp > min_temp) {
+        // Create a modifiable copy
+        vector copy_tree_vec;
+        vector_init(&copy_tree_vec);
+
+        vector copy_losses_vec;
+        vector_init(&copy_losses_vec);
+        int copy_kloss[m];
+        for (int i = 0; i < m; i++) { copy_kloss[i] = current_kloss[i]; }
+
+        int copy_sigma[n];
+        for (int i = 0; i < n; i++) { copy_sigma[i] = current_sigma[i]; }
+
+        node_t *copy_root = treecpy(current_root, &copy_tree_vec, &copy_losses_vec, n);
+
+
+        for (int i = 0; i < vector_total(&copy_tree_vec); i++) {
+            node_t *n = vector_get(&copy_tree_vec, i);
+            assert(n->id == i);
         }
-        printf("Phase %d:\nStep\t\t\tLog-likelihood\t\t\tTemperature\n", phase);
-        while (current_temp > min_temp) {
-            // Create a modifiable copy
-            vector copy_tree_vec;
-            vector_init(&copy_tree_vec);
+        assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
+        assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
 
-            vector copy_losses_vec;
-            vector_init(&copy_losses_vec);
-            int copy_kloss[m];
-            for (int i = 0; i < m; i++) { copy_kloss[i] = current_kloss[i]; }
+        neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES);
 
-            int copy_sigma[n];
-            for (int i = 0; i < n; i++) { copy_sigma[i] = current_sigma[i]; }
+        double new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
 
-            node_t *copy_root = treecpy(current_root, &copy_tree_vec, &copy_losses_vec, n);
+        // if (new_lh > BEST_LH_EVER)
+        //     BEST_LH_EVER = new_lh;
 
+        double acceptance = accept_prob(current_lh, new_lh, current_temp);
+        double p = genrand_real1();
 
-            for (int i = 0; i < vector_total(&copy_tree_vec); i++) {
-                node_t *n = vector_get(&copy_tree_vec, i);
-                assert(n->id == i);
-            }
-            assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
-            assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
+        if (acceptance > p) {
+            // Destroy current solution
+            destroy_tree(current_root);
 
-            neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES, phase);
+            vector_free(&current_tree_vec);
+            vector_init(&current_tree_vec);
 
-            double new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
+            vector_free(&current_losses_vec);
+            vector_init(&current_losses_vec);
 
-            // if (new_lh > BEST_LH_EVER)
-            //     BEST_LH_EVER = new_lh;
+            // Copy new solution to current
+            double test_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
+            assert(test_lh == new_lh);
+            // for (int i = 0; i < n; i++) { printf("%d ", copy_sigma[i]); } printf("\n");
 
-            double acceptance = accept_prob(current_lh, new_lh, current_temp);
-            double p = genrand_real1();
+            current_lh = new_lh;
 
-            if (acceptance > p) {
-                // Destroy current solution
-                destroy_tree(current_root);
+            for (int i = 0; i < m; i++) { current_kloss[i] = copy_kloss[i]; }
+            // for (int i = 0; i < n; i++) { current_sigma[i] = copy_sigma[i]; }
 
-                vector_free(&current_tree_vec);
-                vector_init(&current_tree_vec);
+            current_root = treecpy(copy_root, &current_tree_vec, &current_losses_vec, n);
+            // for (int i = 0; i < n; i++) { printf("%d ", current_sigma[i]); } printf("\n");
+            double test_clh = greedy_tree_loglikelihood(current_root, current_tree_vec, current_sigma, inmatrix, n, m, alpha, beta);
+            // for (int i = 0; i < n; i++) { printf("%d ", current_sigma[i]); } printf("\n");
+            assert(test_clh == test_lh);
+        }
 
-                vector_free(&current_losses_vec);
-                vector_init(&current_losses_vec);
-
-                // Copy new solution to current
-                double test_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta);
-                assert(test_lh == new_lh);
-                // for (int i = 0; i < n; i++) { printf("%d ", copy_sigma[i]); } printf("\n");
-
-                current_lh = new_lh;
-
-                for (int i = 0; i < m; i++) { current_kloss[i] = copy_kloss[i]; }
-                // for (int i = 0; i < n; i++) { current_sigma[i] = copy_sigma[i]; }
-
-                current_root = treecpy(copy_root, &current_tree_vec, &current_losses_vec, n);
-                // for (int i = 0; i < n; i++) { printf("%d ", current_sigma[i]); } printf("\n");
-                double test_clh = greedy_tree_loglikelihood(current_root, current_tree_vec, current_sigma, inmatrix, n, m, alpha, beta);
-                // for (int i = 0; i < n; i++) { printf("%d ", current_sigma[i]); } printf("\n");
-                assert(test_clh == test_lh);
-            }
-
-            // Destroy neighbor
-            destroy_tree(copy_root);
-            vector_free(&copy_tree_vec);
-            vector_free(&copy_losses_vec);
+        // Destroy neighbor
+        destroy_tree(copy_root);
+        vector_free(&copy_tree_vec);
+        vector_free(&copy_losses_vec);
 
 
-            
-            if (current_temp <= 0.25 * start_temp) {
-                current_temp *= (1 - (current_cooling_rate * 0.1));
-            } else {
-                current_temp *= (1 - current_cooling_rate);
-            }
+        
+        if (current_temp <= 0.25 * start_temp) {
+            current_temp *= (1 - (current_cooling_rate * 0.1));
+        } else {
+            current_temp *= (1 - current_cooling_rate);
+        }
 
-            ++step;
-            if (step % 5000 == 0 || step == 1) {
-                printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
-                int bs[n];
-                for (int i = 0; i < n; i++) { bs[i] = 0; }
-                // printf("MAX LH: %f\n", greedy_tree_loglikelihood(current_root, current_tree_vec, bs, inmatrix, n, m, alpha, beta));
-
-            }
+        ++step;
+        if (step % 5000 == 0 || step == 1) {
+            printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
+            int bs[n];
+            for (int i = 0; i < n; i++) { bs[i] = 0; }
+            // printf("MAX LH: %f\n", greedy_tree_loglikelihood(current_root, current_tree_vec, bs, inmatrix, n, m, alpha, beta));
 
         }
+
     }
 
     // *best_lh = current_lh;
