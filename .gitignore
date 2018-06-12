@@ -7,3 +7,5 @@ cmake-build-debug
 sasc.dSYM
 CMakeLists.txt
 *.sh
+
+data/dana
