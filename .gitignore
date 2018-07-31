@@ -9,3 +9,4 @@ CMakeLists.txt
 *.sh
 
 data/dana
+data/exp_temps

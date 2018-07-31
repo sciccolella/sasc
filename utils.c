@@ -79,24 +79,29 @@ import_input(int **input_matrix, int rows, int columns, char *path){
 void
 print_help() {
     printf("SASC -- Simulated Anneling for cancer progression inference via Single Cell Sequencing.\n");
+
+    //TODO: update this
     
     printf("\vRequired arguments:\n");
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
-    printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");
+    printf("\t-m MUTATIONS\tNumber of mutations in the input file.\n");
     printf("\t-k DOLLOK\t\tK value of Dollo(k) model.\n");
     printf("\t-a ALPHA\t\tFalse Negative rate in the input file.\n");
     printf("\t-b BETA\t\t\tFalse Positive rate in the input file.\n");
     printf("\t-i INFILE\t\tPath of the input file.\n");
 
     printf("\vOptional arguments:\n");
-    printf("\t-d DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
+    printf("\t-d DELETIONS\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
+    printf("\t-r REPETITIONS\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
+    printf("\t-l \t\t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
+    printf("\t-x \t\t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
     exit(EXIT_SUCCESS);
 }
 
 args_t*
 get_arguments(int cargc, char **cargsv) {
-    char *argp_program_version = "SACS -- version: 1.3";
+    char *argp_program_version = "SACS -- version: 3.0";
 
     args_t *arguments = malloc(sizeof(args_t));
 
@@ -104,16 +109,29 @@ get_arguments(int cargc, char **cargsv) {
     arguments->print_leaves = 0;
     arguments->print_expected = 0;
     arguments->repetitions = 5;
+    arguments->start_temp = 10000.0;
+    arguments->cooling_rate = 0.01;
+
+    arguments->gamma = 1;
+
+    arguments->el_a_variance = 0;
+    arguments->el_b_variance = 0;
+    arguments->el_g_variance = 0;
 
     strcpy(arguments->mut_file, "NULL");
+    strcpy(arguments->cell_file, "NULL");
     int inserted_args = 0;
 
     char *cvalue = NULL;
     int c;
 
+    double single_alpha;
+    double single_gamma;
+    int res;
+
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:k:i:e:d:lxr:s:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxr:S:C:A:B:G:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -124,12 +142,27 @@ get_arguments(int cargc, char **cargsv) {
                 inserted_args++;
                 break;
             case 'a':
-                sscanf(optarg, "%lf", &arguments->alpha);
+                res = sscanf(optarg, "%lf", &single_alpha);
+                if (res == 1) {
+                    arguments->alpha = single_alpha;
+                } else {
+                    arguments->alpha = -1;
+                    strcpy(arguments->alpha_file, optarg);
+                }
                 inserted_args++;
                 break;
             case 'b':
                 sscanf(optarg, "%lf", &arguments->beta);
                 inserted_args++;
+                break;
+            case 'g':
+                res = sscanf(optarg, "%lf", &single_gamma);
+                if (res == 1) {
+                    arguments->gamma = single_gamma;
+                } else {
+                    arguments->gamma = -1;
+                    strcpy(arguments->gamma_file, optarg);
+                }
                 break;
             case 'k':
                 arguments->k = atoi(optarg);
@@ -141,6 +174,9 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'e':
                 strcpy(arguments->mut_file, optarg);
+                break;
+            case 'E':
+                strcpy(arguments->cell_file, optarg);
                 break;
             case 'h':
                 print_help();
@@ -157,9 +193,23 @@ get_arguments(int cargc, char **cargsv) {
             case 'r':
                 arguments->repetitions = atoi(optarg);
                 break;
-            case 'V':
+            case 'v':
                 printf("%s\n", argp_program_version);
                 exit(0);
+            case 'S':
+                sscanf(optarg, "%lf", &arguments->start_temp);
+                break;
+            case 'C':
+                sscanf(optarg, "%lf", &arguments->cooling_rate);
+                break;
+            case 'A':
+                sscanf(optarg, "%lf", &arguments->el_a_variance);
+                break;
+            case 'B':
+                sscanf(optarg, "%lf", &arguments->el_b_variance);
+                break;
+            case 'G':
+                sscanf(optarg, "%lf", &arguments->el_g_variance);
                 break;
             case '?':
                 if (isprint (optopt))
@@ -177,6 +227,11 @@ get_arguments(int cargc, char **cargsv) {
         fprintf (stderr, "ERROR: Not all required arguments were passed.\n");
         exit(EXIT_FAILURE);
     }
+
+    if (arguments->k == 0)
+        arguments->max_del = 0;
+    if (arguments->max_del == 0)
+        arguments->k = 0;
 
     return arguments;
 }

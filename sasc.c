@@ -26,6 +26,9 @@ int main (int argc, char **argv)
     double ALPHA = arguments->alpha;
     double BETA = arguments->beta;
 
+    int SINGLE_ALPHA = 0;
+    int SINGLE_GAMMA = 0;
+
     int MAX_LOSSES = arguments->max_del;
 
     char OUT_PATH[255];
@@ -62,10 +65,108 @@ int main (int argc, char **argv)
         fclose(fp);
 
         if (i != M) {
-            fprintf(stderr, "ERROR: Dimesion of mutations names and MUTATIONS are different.\n");
+            fprintf(stderr, "ERROR: Dimension of mutations names and MUTATIONS are different.\n");
             exit(EXIT_FAILURE);
         }
             
+    }
+
+    // Create cells names
+    char CELL_NAMES[N][50];
+    if (strcmp(arguments->cell_file, "NULL") == 0) {
+        for (int i = 0; i < N; i++) {
+            sprintf(CELL_NAMES[i], "cell%d", i+1);
+        }
+    } else {
+        FILE *fp;
+        char buff[50];
+
+        fp = fopen(arguments->cell_file, "r");
+        int i = 0;
+        if (fp == NULL){
+            fprintf(stderr, "ERROR: Cannot open CELLFILE.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        while (fgets(buff, sizeof buff, fp) != NULL) {
+            buff[strcspn(buff, "\n")] = '\0';
+            // printf("-%s-\n", buff);
+            strcpy(CELL_NAMES[i], buff);
+            i++;
+        }
+        fclose(fp);
+
+        if (i != N) {
+            fprintf(stderr, "ERROR: Dimension of mutations names and CELLS are different.\n");
+            exit(EXIT_FAILURE);
+        }
+
+    }
+
+    // Create multi-alpha rates
+    double MULTI_ALPHAS[M];
+    if (arguments->alpha != -1) {
+        for (int i = 0; i < M; i++) {
+            MULTI_ALPHAS[i] = arguments->alpha;
+        }
+        SINGLE_ALPHA = 1;
+    } else {
+        FILE *fp;
+        char buff[50];
+
+        fp = fopen(arguments->alpha_file, "r");
+        int i = 0;
+        if (fp == NULL){
+            fprintf(stderr, "ERROR: Cannot open ALPHA FILE.\n");
+            exit(EXIT_FAILURE);
+        }
+            
+        while (fgets(buff, sizeof buff, fp) != NULL) {
+            buff[strcspn(buff, "\n")] = '\0';
+            sscanf(buff, "%lf", &MULTI_ALPHAS[i]);
+            i++;
+        }
+        fclose(fp);
+
+        if (i != M) {
+            fprintf(stderr, "ERROR: Dimension of mutations and ALPHAS are different.\n");
+            exit(EXIT_FAILURE);
+        }
+        SINGLE_ALPHA = 0;
+            
+    }
+
+    // Create multi-gamma rates
+    double MULTI_GAMMAS[M];
+    if (arguments->gamma != -1) {
+        for (int i = 0; i < M; i++) {
+            MULTI_GAMMAS[i] = arguments->gamma;
+        }
+        SINGLE_GAMMA = 1;
+    } else {
+        FILE *fp;
+        char buff[50];
+
+        fp = fopen(arguments->gamma_file, "r");
+        int i = 0;
+        if (fp == NULL){
+            fprintf(stderr, "ERROR: Cannot open GAMMA FILE.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        while (fgets(buff, sizeof buff, fp) != NULL) {
+            buff[strcspn(buff, "\n")] = '\0';
+            sscanf(buff, "%lf", &MULTI_GAMMAS[i]);
+            i++;
+        }
+        fclose(fp);
+
+        if (i != M) {
+            fprintf(stderr, "ERROR: Dimension of mutations and GAMMAS are different.\n");
+            exit(EXIT_FAILURE);
+        }
+        SINGLE_GAMMA = 0;
+
     }
 
     //Itialize MT19937
@@ -93,13 +194,9 @@ int main (int argc, char **argv)
     import_input(INPUT_MATRIX, N, M, arguments->infile);
 
 
-    double START_TEMP = 100000.0;
-    double COOLING_RATE = 0.00001;    
-    double MIN_TEMP = 0.0001;
-    // These three are for debug purposes    
-    START_TEMP = 10000.0;
-    COOLING_RATE = 0.01;
-    MIN_TEMP = 0.001;
+    double START_TEMP = arguments->start_temp;
+    double COOLING_RATE = arguments->cooling_rate;
+    double MIN_TEMP = 0.001;
 
     int REPETITIONS = arguments->repetitions;
     node_t *best_tree = NULL;
@@ -109,7 +206,29 @@ int main (int argc, char **argv)
     vector_init(&best_tree_vec);
     vector best_losses_vec;
     vector_init(&best_losses_vec);
-    
+
+    double a_mu[M];
+    double a_xs[M];
+    double g_mu[M];
+    double g_xs[M];
+
+    for (int i = 0; i < M; i++) {
+        a_mu[i] = MULTI_ALPHAS[i];
+        a_xs[i] = MULTI_ALPHAS[i];
+        g_mu[i] = MULTI_GAMMAS[i];
+        g_xs[i] = MULTI_GAMMAS[i];
+    }
+    elpar_t* el_params = set_el_params(SINGLE_ALPHA, M,
+            MULTI_ALPHAS, a_mu, arguments->el_a_variance, a_xs,
+                                       &BETA, BETA, arguments->el_b_variance,
+                                       MULTI_GAMMAS, g_mu, arguments->el_g_variance, g_xs,
+                                       SINGLE_GAMMA);
+
+    // Generate Cj
+    int Cj[M];
+    for (int i = 0; i < M; i++) {
+        Cj[i] = 0;
+    }
 
     for (int r = 0; r < REPETITIONS; r++) {
         printf("Iteration: %d\n", r+1);
@@ -151,11 +270,14 @@ int main (int argc, char **argv)
         }
 
 
+
+
         // get log-likelihood
-        double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
+        double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
         // for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
         // printf("Start log-like: %lf\n", lh);
-        node_t *ml_tree = anneal(root, ml_tree_vec, N, M, K, ALPHA, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES);
+        node_t *ml_tree = anneal(root, ml_tree_vec, N, M, K, MULTI_ALPHAS, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE,
+                MIN_TEMP, MAX_LOSSES, el_params, MULTI_GAMMAS, Cj);
         
         vector_free(&ml_tree_vec);
         vector_init(&ml_tree_vec);
@@ -163,8 +285,10 @@ int main (int argc, char **argv)
         vector_init(&ml_losses_vec);
         
         ml_tree = treecpy(ml_tree, &ml_tree_vec, &ml_losses_vec, N);
-        
-        double current_lh = greedy_tree_loglikelihood(ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, ALPHA, BETA);
+
+//        for (int i = 0; i < M; i++) { printf("%d ", Cj[i]); } printf("\n");
+
+        double current_lh = greedy_tree_loglikelihood(ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
         // printf("Maximum log-likelihood: %lf\n", current_lh);
 
         if (current_lh > best_loglike) {
@@ -186,18 +310,19 @@ int main (int argc, char **argv)
         destroy_tree(ml_tree);
         
     }
-   
-    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, ALPHA, BETA);    
+
+//    for (int i = 0; i < M; i++) { printf("%d ", Cj[i]); } printf("\n");
+    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
     // printf("Maximum likelihood found: %f\n", best_calculated_likelihood);
 
     if (arguments->print_leaves == 1) {
-        fprint_tree_leaves(best_tree, &best_tree_vec, best_sigma, N, OUT_PATH);
+        fprint_tree_leaves(best_tree, &best_tree_vec, best_sigma, N, OUT_PATH, best_calculated_likelihood, CELL_NAMES);
     } else {
-        fprint_tree(best_tree, OUT_PATH);
+        fprint_tree(best_tree, OUT_PATH, best_calculated_likelihood);
     }
     
     printf("\nMaximum likelihood Tree found: %f\n", best_calculated_likelihood);
-    print_tree(best_tree);    
+    print_tree(best_tree, best_calculated_likelihood);    
     
     printf("Best cell assigment:\n");
     for (int i=0; i<N;i++) {
@@ -229,6 +354,10 @@ int main (int argc, char **argv)
         }
         fclose(fpo);
     }
+
+    printf("alpha: %lf\n", MULTI_ALPHAS[0]);
+    printf("beta: %lf\n", el_params->b_x);
+    printf("alpha: %lf\n", MULTI_GAMMAS[0]);
 
 
     return 0;

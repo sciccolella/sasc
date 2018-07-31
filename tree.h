@@ -50,7 +50,7 @@ void destroy_tree(node_t *node);
  * 
  * @param root Root of the (sub)tree
  */
-void print_tree(node_t *root);
+void print_tree(node_t *root, double score);
 
 /**
  * @brief Check if cand_ancestor is an ancestor of node
@@ -70,7 +70,7 @@ bool is_ancestor(node_t *node, node_t *cand_ancestor);
  * @param leaves Leaves assignment (SIGMA)
  * @param MAX Number of cells
  */
-void print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX);
+void print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX, double score);
 
 /**
  * @brief Print tree in DOT code on outpath
@@ -78,7 +78,7 @@ void print_tree_leaves(node_t *root, node_t *tree[], int leaves[], int MAX);
  * @param root Root of the (sub)tree
  * @param outpath Path to output file
  */
-void fprint_tree(node_t *root, char *outpath);
+void fprint_tree(node_t *root, char *outpath, double score);
 
 /**
  * @brief Print tree in DOT code on stdout and attach the leaves to the nodes
@@ -89,7 +89,7 @@ void fprint_tree(node_t *root, char *outpath);
  * @param MAX Number of cells
  * @param outpath Path to output file
  */
-void fprint_tree_leaves(node_t *root, vector *tree_vec, int leaves[], int MAX, char *outpath);
+void fprint_tree_leaves(node_t *root, vector *tree_vec, int leaves[], int MAX, char *outpath, double score, char  cell_names[][50]);
 
 /**
  * @brief Get the genotype profile of the selected node

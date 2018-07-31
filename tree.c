@@ -171,10 +171,10 @@ destroy_tree(node_t *node){
  }
 
  void
- print_tree(node_t *root) {
+ print_tree(node_t *root, double score) {
    printf("%s\n", "digraph g {");
    print_tree_rec(root);
-   printf("%s\n", "}");
+   printf("\tlabelloc=\"t\";\n\tlabel=\"Confidence score: %lf\";\n}\n", score);
  }
 
 // void
@@ -212,18 +212,18 @@ fprint_tree_rec(node_t *node, FILE *fo) {
 }
 
 void
-fprint_tree(node_t *root, char *outpath) {
+fprint_tree(node_t *root, char *outpath, double score) {
     FILE *fp;
     fp = fopen(outpath, "w+");
     
     fprintf(fp, "%s\n", "digraph g {");
     fprint_tree_rec(root, fp);
-    fprintf(fp, "}\n");
+    fprintf(fp, "\tlabelloc=\"t\";\n\tlabel=\"Confidence score: %lf\";\n}\n", score);
     fclose(fp);
 }
 
 void
-fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *outpath) {
+fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *outpath, double score, char cell_names[][50]) {
     FILE *fp;
     fp = fopen(outpath, "w+");
 
@@ -232,12 +232,12 @@ fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *o
 
     for (int i = 0; i < MAX; i++) {
         node_t *node = vector_get(tree_vec, sigma[i]);
-        fprintf(fp, "\t\"%d\" -> cell%d;\n",
-                    node->id, i+1);
-        fprintf(fp, "\tcell%d [shape=box]\n", i+1);
+        fprintf(fp, "\t\"%d\" -> \"%s\";\n",
+                    node->id, cell_names[i]);
+        fprintf(fp, "\t\"%s\" [shape=box];\n", cell_names[i]);
     }
 
-    fprintf(fp, "}\n");
+    fprintf(fp, "\tlabelloc=\"t\";\n\tlabel=\"Confidence score: %lf\";\n}\n", score);
     fclose(fp);
 
 }
