@@ -173,21 +173,18 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
 
     int node_max = vector_total(&tree_vec);
 
-    int nodes_genotypes[node_max][m];
+    int* nodes_genotypes = calloc(node_max * m, sizeof(int));
 
     for (int i = 0; i < node_max; i++) {
-        for (int j = 0; j < m; j++) {
-            nodes_genotypes[i][j] = 0;
-        }
 
         node_t *node = vector_get(&tree_vec, i);
 
         if (node == NULL) {
             for (int j = 0; j < m; j++) {
-                nodes_genotypes[i][j] = 3;
+                nodes_genotypes[i * m + j] = 3;
             }
         } else {
-            get_genotype_profile(node, nodes_genotypes[i]);
+            get_genotype_profile(node, nodes_genotypes + i * m);
         }
     }
 
@@ -203,11 +200,11 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
         double best_lh = -DBL_MAX;
 
         for (int node = 0; node < node_max; node++) {
-            if (nodes_genotypes[node][0] != 3) {
+            if (nodes_genotypes[node  * m + 0] != 3) {
                 double lh = 0;
 
                 for (int j = 0; j < m; j++) {
-                    double p = prob(inmatrix[i][j], nodes_genotypes[node][j], alpha[j], beta);
+                    double p = prob(inmatrix[i][j], nodes_genotypes[node * m + j], alpha[j], beta);
                     lh += log(p);
                 }
 
@@ -221,7 +218,8 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
         sigma[i] = best_sigma;
         maximum_likelihood += best_lh;
     }
-    
+
+    free(nodes_genotypes);
     return maximum_likelihood;
 }
 
