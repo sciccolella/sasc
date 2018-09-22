@@ -580,10 +580,15 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
         }
 
         ++step;
-        if (step % 2000 == 0 || step == 1) {
+        printf("step: %d\n", step);
+        if (step % 10 == 0 || step == 1) {
             printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
-            int bs[n];
-            for (int i = 0; i < n; i++) { bs[i] = 0; }
+//            int bs[n];
+//            for (int i = 0; i < n; i++) { bs[i] = 0; }
+            char test[50];
+            sprintf(test, "test_%d.gv", step);
+            fprint_tree(current_root, test, current_lh);
+
         }
 
     }
