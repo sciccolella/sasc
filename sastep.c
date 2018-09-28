@@ -586,7 +586,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
 //            int bs[n];
 //            for (int i = 0; i < n; i++) { bs[i] = 0; }
             char test[50];
-            sprintf(test, "test_%d.gv", step);
+            sprintf(test, "test-RED_%d.gv", step);
             fprint_tree(current_root, test, current_lh);
 
         }
