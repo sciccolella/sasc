@@ -1,8 +1,5 @@
-/*! \file tree.h
-    \brief Include most of the operation involving Trees.
-    
-    Details.
-*/
+#ifndef TREE_H
+#define TREE_H
 
 #include <stdbool.h>
 #include "vector.h"
@@ -115,3 +112,5 @@ bool is_loss_valid(node_t * loss);
 bool is_already_lost(node_t *node, int mut_index);
 
 void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss, int *sigma, int n);
+
+#endif

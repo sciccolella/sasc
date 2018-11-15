@@ -4,8 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <assert.h>
 #include "vector.h"
+
+#ifdef NDEBUG
+#include <assert.h>
+#else
+#define assert(ignore)((void) 0)
+#endif
+
 
 node_t *
 node_new(char *label, int mut_index, int id) {

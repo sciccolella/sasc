@@ -3,13 +3,18 @@
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
-#include <assert.h>
 #include <limits.h>
 #include <float.h>
 #include "vector.h"
 #include "tree.h"
 #include "sastep.h"
 #include "mt19937ar.h"
+
+#ifdef NDEBUG
+#include <assert.h>
+#else
+#define assert(ignore)((void) 0)
+#endif
 
 int
 random_assignment(int MAX){
@@ -580,15 +585,8 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
         }
 
         ++step;
-        printf("step: %d\n", step);
-        if (step % 10 == 0 || step == 1) {
+        if (step % 1000 == 0 || step == 1) {
             printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
-//            int bs[n];
-//            for (int i = 0; i < n; i++) { bs[i] = 0; }
-            char test[50];
-            sprintf(test, "test-RED_%d.gv", step);
-            fprint_tree(current_root, test, current_lh);
-
         }
 
     }

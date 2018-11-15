@@ -5,12 +5,17 @@
 #include <time.h>
 #include <limits.h>
 #include <float.h>
-#include <assert.h>
 #include <math.h>
 #include "tree.h"
 #include "utils.h"
 #include "sastep.h"
 #include "vector.h"
+
+#ifdef NDEBUG
+#include <assert.h>
+#else
+#define assert(ignore)((void) 0)
+#endif
 
 int MAX_ID_TREE = 0;
 
