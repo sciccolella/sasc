@@ -1,12 +1,9 @@
 .vscode
 sasc
 .DS_Store
-*.gv
 cmake-build-debug
 .idea
 sasc.dSYM
 CMakeLists.txt
 *.sh
-
-data/dana
-data/exp_temps
+*.o
