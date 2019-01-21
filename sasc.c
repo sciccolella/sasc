@@ -102,7 +102,7 @@ int main (int argc, char **argv)
         fclose(fp);
 
         if (i != N) {
-            fprintf(stderr, "ERROR: Dimension of mutations names and CELLS are different.\n");
+            fprintf(stderr, "ERROR: Dimension of cells names and CELLS are different.\n");
             exit(EXIT_FAILURE);
         }
 

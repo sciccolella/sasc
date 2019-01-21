@@ -84,18 +84,33 @@ print_help() {
     
     printf("\vRequired arguments:\n");
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
-    printf("\t-m MUTATIONS\tNumber of mutations in the input file.\n");
+    printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");
     printf("\t-k DOLLOK\t\tK value of Dollo(k) model.\n");
-    printf("\t-a ALPHA\t\tFalse Negative rate in the input file.\n");
+    printf("\t-a ALPHA\t\tFalse Negative rate in the input file or path to FN rates file.\n");
     printf("\t-b BETA\t\t\tFalse Positive rate in the input file.\n");
     printf("\t-i INFILE\t\tPath of the input file.\n");
 
     printf("\vOptional arguments:\n");
-    printf("\t-d DELETIONS\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
+    printf("\vModel parameters (optional):\n");
+    printf("\t-d DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
-    printf("\t-r REPETITIONS\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
-    printf("\t-l \t\t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
-    printf("\t-x \t\t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
+    printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
+    printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
+    printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
+    
+    printf("\vOutput parameters (optional):\n");
+    printf("\t-l \t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
+    printf("\t-x \t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
+
+    printf("\vSimulated Annealing parameters (optional):\n");
+    printf("\t-S STARTTEMP\t\tStarting temperature of the Simulated Annealing algorithm.\n");
+    printf("\t-C COOLINGRATE\t\tCooling rate of the Simulated Annealing algorithm.\n");
+
+    printf("\vError parameters (optional):\n");
+    printf("\t-A ALPHASTDV\t\tStandard deviation for new FN discovery.\n");
+    printf("\t-B BETASTDV\t\tStandard deviation for new FP discovery.\n");
+    printf("\t-G GAMMASTDV\t\tStandard deviation for new GAMMA discovery.\n");
+
     exit(EXIT_SUCCESS);
 }
 
