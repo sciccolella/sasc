@@ -45,14 +45,14 @@ int main (int argc, char **argv)
     srand((unsigned)time(NULL));
     
     // Create mutation names
-    char MUT_NAMES[M][50];
+    char MUT_NAMES[M][255];
     if (strcmp(arguments->mut_file, "NULL") == 0) {
         for (int i = 0; i < M; i++) {
             sprintf(MUT_NAMES[i], "%d", i+1);
         }
     } else {
         FILE *fp;
-        char buff[50];
+        char buff[255];
 
         fp = fopen(arguments->mut_file, "r");
         int i = 0;
@@ -77,14 +77,14 @@ int main (int argc, char **argv)
     }
 
     // Create cells names
-    char CELL_NAMES[N][50];
+    char CELL_NAMES[N][255];
     if (strcmp(arguments->cell_file, "NULL") == 0) {
         for (int i = 0; i < N; i++) {
             sprintf(CELL_NAMES[i], "cell%d", i+1);
         }
     } else {
         FILE *fp;
-        char buff[50];
+        char buff[255];
 
         fp = fopen(arguments->cell_file, "r");
         int i = 0;
@@ -117,7 +117,7 @@ int main (int argc, char **argv)
         SINGLE_ALPHA = 1;
     } else {
         FILE *fp;
-        char buff[50];
+        char buff[255];
 
         fp = fopen(arguments->alpha_file, "r");
         int i = 0;
@@ -150,7 +150,7 @@ int main (int argc, char **argv)
         SINGLE_GAMMA = 1;
     } else {
         FILE *fp;
-        char buff[50];
+        char buff[255];
 
         fp = fopen(arguments->gamma_file, "r");
         int i = 0;
