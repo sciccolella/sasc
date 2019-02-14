@@ -229,7 +229,7 @@ fprint_tree(node_t *root, char *outpath, double score) {
 }
 
 void
-fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *outpath, double score, char cell_names[][50]) {
+fprint_tree_leaves(node_t *root, vector *tree_vec, int sigma[], int MAX, char *outpath, double score, char cell_names[][255]) {
     FILE *fp;
     fp = fopen(outpath, "w+");
 
