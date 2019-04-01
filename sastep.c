@@ -41,7 +41,7 @@ check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec, int *k_lo
 }
 
 int
-prune_regraft(node_t *prune, node_t *regraft, node_t *root) {
+prune_regraft(node_t *prune, node_t *regraft, node_t *root, int monoclonal) {
     if (is_ancestor(regraft, prune) == true)
         return 1;
     if (regraft->parent == prune)
@@ -49,6 +49,9 @@ prune_regraft(node_t *prune, node_t *regraft, node_t *root) {
     if (prune->parent == NULL)
         return 1;
     if (prune == regraft)
+        return 1;
+
+    if (monoclonal == 1 && regraft->parent == NULL)
         return 1;
 
     node_detach(prune);
@@ -339,7 +342,7 @@ params_learning(elpar_t* el_params) {
 
 void
 neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector *loss_vec, int *k_loss, int MAX_LOSSES,
-            elpar_t* el_params) {
+            elpar_t* el_params, int monoclonal) {
 
     double el = genrand_real1();
     if (el < 0.1 && (el_params->a_variance > 0 || el_params->b_variance > 0 || el_params->g_variance > 0)) {
@@ -426,7 +429,7 @@ neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k, vector
                     int ig = random_assignment(node_max);
                     graft = vector_get(tree_vec, ig);
                 }
-                pr_res = prune_regraft(prune, graft, root);
+                pr_res = prune_regraft(prune, graft, root, monoclonal);
                 prune_res = prune;
             }
             check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
@@ -474,7 +477,7 @@ accept_prob(double old_lh, double new_lh, double current_temp) {
 
 node_t *
 anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double beta,  int **inmatrix,
-       double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES, elpar_t* el_params, double* gamma, int *Cj) {
+       double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES, elpar_t* el_params, double* gamma, int *Cj, int MONOCLONAL) {
 
     double current_temp = start_temp;
     double current_cooling_rate = cooling_rate;
@@ -524,7 +527,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
         assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
         assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
 
-        neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES, el_params);
+        neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, &copy_losses_vec, copy_kloss, MAX_LOSSES, el_params, MONOCLONAL);
 
         double new_lh = 0;
         if (el_params->changed == 1) {

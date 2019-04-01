@@ -21,4 +21,4 @@ sasc: sasc.o mt19937ar.o sastep.o tree.o utils.o vector.o
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -rf *.o
+	rm -rf *.o sasc

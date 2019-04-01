@@ -36,6 +36,8 @@ int main (int argc, char **argv)
 
     int MAX_LOSSES = arguments->max_del;
 
+    int MONOCLONAL = 1;
+
     char OUT_PATH[255];
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
 
@@ -237,7 +239,7 @@ int main (int argc, char **argv)
 
     for (int r = 0; r < REPETITIONS; r++) {
         printf("Iteration: %d\n", r+1);
-
+        
         // Generate a RANDOM BTREE
         vector ml_tree_vec;
         vector ml_losses_vec;
@@ -253,20 +255,43 @@ int main (int argc, char **argv)
         }
         shuffle(rantree, M);
 
-        int app_node = 0;
-        for (int i = 0; i < M; i++) {
-            node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
-            vector_add(&ml_tree_vec, cnode1);
-            node_append(vector_get(&ml_tree_vec, app_node), cnode1);
-            i += 1;
+        if (MONOCLONAL == 0) {
+            int app_node = 0;
+            for (int i = 0; i < M; i++) {
+                node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+                vector_add(&ml_tree_vec, cnode1);
+                node_append(vector_get(&ml_tree_vec, app_node), cnode1);
+                i += 1;
 
-            if (i < M){
-                node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
-                vector_add(&ml_tree_vec, cnode2);
-                node_append(vector_get(&ml_tree_vec, app_node), cnode2);
+                if (i < M){
+                    node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+                    vector_add(&ml_tree_vec, cnode2);
+                    node_append(vector_get(&ml_tree_vec, app_node), cnode2);
+                }
+                app_node += 1;
             }
-            app_node += 1;
-        }
+
+
+        } else {
+            node_t *first_clone = node_new(MUT_NAMES[rantree[0]], rantree[0], vector_total(&ml_tree_vec));
+            vector_add(&ml_tree_vec, first_clone);
+            node_append(vector_get(&ml_tree_vec, 0), first_clone);
+
+            int app_node = 1;
+            for (int i = 1; i < M; i++) {
+                node_t *cnode1 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+                vector_add(&ml_tree_vec, cnode1);
+                node_append(vector_get(&ml_tree_vec, app_node), cnode1);
+                i += 1;
+
+                if (i < M){
+                    node_t *cnode2 = node_new(MUT_NAMES[rantree[i]], rantree[i], vector_total(&ml_tree_vec));
+                    vector_add(&ml_tree_vec, cnode2);
+                    node_append(vector_get(&ml_tree_vec, app_node), cnode2);
+                }
+                app_node += 1;
+            }
+        } 
 
         // Generate SIGMA
         int SIGMA[N];
@@ -276,13 +301,12 @@ int main (int argc, char **argv)
 
 
 
-
         // get log-likelihood
         double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
         // for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
         // printf("Start log-like: %lf\n", lh);
         node_t *ml_tree = anneal(root, ml_tree_vec, N, M, K, MULTI_ALPHAS, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE,
-                MIN_TEMP, MAX_LOSSES, el_params, MULTI_GAMMAS, Cj);
+                MIN_TEMP, MAX_LOSSES, el_params, MULTI_GAMMAS, Cj, MONOCLONAL);
         
         vector_free(&ml_tree_vec);
         vector_init(&ml_tree_vec);
