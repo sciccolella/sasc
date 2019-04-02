@@ -16,6 +16,7 @@ typedef struct Arguments {
     char cell_file[255];
     int print_leaves;
     int print_expected;
+    int monoclonal;
     int repetitions;
     double start_temp;
     double cooling_rate;

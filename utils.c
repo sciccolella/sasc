@@ -123,6 +123,7 @@ get_arguments(int cargc, char **cargsv) {
     arguments->max_del = INT_MAX;
     arguments->print_leaves = 0;
     arguments->print_expected = 0;
+    arguments->monoclonal = 0;
     arguments->repetitions = 5;
     arguments->start_temp = 10000.0;
     arguments->cooling_rate = 0.01;
@@ -146,7 +147,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxr:S:C:A:B:G:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -204,6 +205,9 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'x':
                 arguments->print_expected = 1;
+                break;
+            case 'M':
+                arguments->monoclonal = 1;
                 break;
             case 'r':
                 arguments->repetitions = atoi(optarg);

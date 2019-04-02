@@ -36,7 +36,7 @@ int main (int argc, char **argv)
 
     int MAX_LOSSES = arguments->max_del;
 
-    int MONOCLONAL = 1;
+    int MONOCLONAL = arguments->monoclonal;
 
     char OUT_PATH[255];
     sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
