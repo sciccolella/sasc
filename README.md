@@ -76,6 +76,7 @@ Usage
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
 - `-r [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
+- `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
 - `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present.

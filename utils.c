@@ -97,6 +97,7 @@ print_help() {
     printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
     printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
     printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
+    printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
     
     printf("\vOutput parameters (optional):\n");
     printf("\t-l \t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
