@@ -1,3 +1,9 @@
+/*
+Original vector implementation from Emil Hernvall.
+Distributed under MIT license.
+URL: https://gist.github.com/EmilHernvall/953968
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 

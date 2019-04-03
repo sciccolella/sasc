@@ -79,7 +79,7 @@ Usage
 - `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
-- `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present.
+- `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present. Please note that this flag is needed if you plan to run the visualization tool afterwards.
 - `-x`: If this flag is used, SASC will additionally output the expected matrix E.
 
 **Simulated Annealing parameters (optional)**
@@ -118,10 +118,10 @@ SASC can then be run using the previously described parameters. Here we show a l
 
 The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the tree, a single FN rate of `0.3`, no prior loss probability (default to `1`) and mutations names specified in the file `data/real/gawad/pat4_mut.txt`.
 
-**MGH36 with different FN rates**
+**MGH36 with different FN rates and monoclonality**
 
 ```bash
-./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -r 1
+./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -r 1 -M
 ```
 The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in file `data/real/MGH36/MGH36_fn-rates.txt`, mutation names in `data/real/MGH36/MGH36_snv-names.txt`, cell names in `data/real/MGH36/MGH36_cell-names.txt`, output of mutational tree with cells as leaves (`-l`), output of the expected matrix (`-x`) and a total of 1 repetition (`-r 1`).
 
@@ -131,3 +131,79 @@ The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in fi
 ```
 
 The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the tree, FN rates detailed in `examples/alphas.txt`, prior loss probabilities in `examples/gammas.txt`, learning standard deviation of `0.2` for FN rate (`-A 0.2`) and learning standard deviation of `0.05` for prior loss (`-G 0.05`).
+
+SASC-viz (Visualization tool)
+=============================
+
+The script `SASC-viz.py` can be used as a visualization tool and to apply operation to `SASC`'s output without needing to re run the tool. The tool will change the output of the tool only for visualization purposes. **Please note that you have to run SASC with the `-l` flag in order to use the tool.**
+
+Usage
+----------
+
+```bash
+python3 SASC-viz.py [-h] -t TREE [-E CELLNAMES | -n TOTCELL] [--show-support]
+              [--show-color] [--collapse-support COLLAPSE_SUPPORT]
+              [--collapse-simple] [--sep SEP]
+```
+
+**Input files required**
+
+- `-t TREE`: path to the input file, i.e. `SASC`'s output (run with the `-l` flag).
+
+You are required to use either:
+- `-E CELLNAMES`: path to the mutation labels file (this is the same file used with the flag `-E` on `SASC`).
+- `-n TOTCELLS`: instead of the previous argument, if the mutation labels are not specified, you must provide the number of cells in the input (this is the same option used with `-n` with `SASC`).
+
+**Supported operations (optional)**
+
+- `--collapse-simple`: when this option is activated, all
+    simple non-branching paths are collapsed, i.e. if a node has only one child, then such node is merged with its child.
+- `--show-support`: show the _mutation support_ of each node.
+- `--collapse-support THRESHOLD`: if the support of a node _x_ is lower than the specified `THRESHOLD`, then _x_ is merged with its parent. This operation is performed in a bottom-up fashion starting from the leaves.
+- `--show-color`: if this flag is used, the nodes will be colored using a gradient scale from red to green based on the support.
+- `--sep STRING`: if this option is used the labels on the nodes will be separetad by `STRING`. Default is `,`.
+
+**Output**
+
+The tool will output a tree in DOT format, which can be converted into a picture using either the program `dot` or the web interface available on [webgraphviz.com](http://www.webgraphviz.com/).
+
+Usage example
+----------------
+
+Run `SASC-viz` on the MGH36 dataset, run with the parameters used in the previous example.
+
+```bash
+python3 SASC-viz.py -t examples/MGH36_scs_mlt.gv -E data/real/MGH36/MGH36_cell-names.txt --collapse-simple --collapse-support 20 --show-support
+```
+Output:
+
+```
+digraph phylogeny {
+	node [penwidth=2];
+	"0" [label="germline [255 cells]"];
+	"0" -> "1";
+	"1" [label="IDH1,NOTCH2,RTTN,TBC1D10A,MLYCD,HLA-DQB2,CACNA1G,CTNNA2,NRN1,APC2,IL33,NBPF10,RFX3,UBE2Z,ZZEF1,KHSRP,SH3BP5,CCDC181,VGLL4,PIK3CA,PHLDB3,NR3C1,RP11-356C4.3,VPS9D1,PLEKHM1,LINC00937,ST8SIA3,CPEB4,TRPM3,ANKRD30B,FAM182B,ABCA7,EMR2,CYP27A1,STXBP1,TRIOBP,ZNF451,CEP55,TFAP2A,ZNF721,KIF2A,USP36,IFT81,SVEP1,MCM8,ARHGEF3,AGAP2,NR5A2,TRPM2,AS3MT,RUNX2,SOX5,KIAA0907,CPAMD8 [s=99%]"];
+	"1" -> "23";
+	"23" [label="CEBPZ,DGCR6L,MAN1B1,ENO3,ZNF526 [s=99%]"];
+	"23" -> "25";
+	"25" [label="MIR4477B,KMT2C,PCDHA1,SLC26A11,ORC3,CLEC18B,HELZ2,RIN2,TXNDC2,HEATR4,NPEPL1,KAT6A,CNNM2,SLC16A7 [s=99%]"];
+	"25" -> "33";
+	"33" [label="EEF1B2,ZNF462,EP400,RP11-403I13.8 [s=95%]"];
+}
+```
+
+Run `SASC-viz` to produce directly a PDF file containing the tree. This requires `dot` to be installed.
+
+```bash
+python3 SASC-viz.py -t examples/simulated_mlt.gv -n 50 --collapse-simple --collapse-support 5 --show-support | dot -Tpdf > tree.pdf
+```
+Output:
+
+![examples/tree.png](examples/tree.png)
+
+Definition of mutation support
+-----------------------------
+The support  _s<sub>i</sub>_ of a mutation _i_ is computed on the _n x m_ inferred matrix _E_ as follows.
+Let  _pr(i)_ be the set of nodes in the path from the root to _i_ let _st(i)_ be the set of nodes in the subtree rooted in _i_, and let _C(i)_ be the number of cells assigned to the node _i_. Then the mutation support _s<sub>i</sub>_ is:
+
+<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAyBAMAAAAO4Uy+AAAAMFBMVEX///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVGYiRIl2mRAyu6vv3c0sB5VeAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEfElEQVRYCa1XXYgbVRT+ksxMbiabzbS6ICxLp5H+gD7kRSsi7igoig+manatUjqtGC37Ehfa+gfOLtZWxXV8qA/1YQdUkCA1D64/9MGAItun7kORFQQD+iBSpII/tNKu59472WSymZlkN4fMPefc891vknvv3PkCRNjIjVqt9sfFtZUIjCzNS7c3FigBiX+5ZxNXY/FViTgVC/QBr1kieC4cf/LLSsqG5kqEYocjA5XRZZGqgc7ORP0ROGhhtNXXbAUxPnVDAFgorEaVRaDQAhxuBXF+RykSkea/SAc+bKE+aAVxPvtXJOJRg8oJoAHcX8U4MBIJ7yz+5HRm3fGnfkcDzLyAL4B8NyI0X/R6lU4D9AH+k8XUCpTUFVwAco7siW9VrxfGBsRO+YcXiyBiqHWiHoB4weFju0x1MMb4sn5Pl+KCNYjSSHqDzPH6ehPFutED5qBK6ct0vUFXg2bXyZas/hcva9Ew37TyAT/ayf02unI2MjZ5un3euecmC31vtwqNAlLODJ5gL1KkbT89vds8AK2OfbwyM3WUO3pAkke2zQL9PiBKnQ9DNplzfhGrdYf2Xn7O+ArmKt4SJdmsx82OzqjwblFkS1hAQy/TVEx+hLPAJ0g1A8SqK1kUM4qtXWO/8fjNQ1cxlvHSPGa3g2bna6imnArex42vJBmtal+mr0lbwX71sFoEMl6WWLEfuXk82Ekx4EHfHrpv+wucke08iibwPtRnIFatjdhClDzxkj86y71c1y3w9RiqGHSmWT0Kga5E4dZA3k9yCzAXi3sAU7GYTQGm6bkf4yNfOU+2tCmOnoMWr7lEHTB/l23JEeF4I8A6rEQ30KAjhWzIU6E7mSodKcM3pVDgR0q0Xfy9Vjt3ee16NIqqXY82HSnRtqPK63M/u9GwDYcRHSnRlpbyQhP8PaHs6eP2nRs0HB0pMXbZEYBSKOygC/XS4BoOk01B6YQR6x6dqVc2oeESf4dRyv5XHfJerIZLVOZvs+SIVvtNV97ql175k3t6IriGY9+G6ovXJ81Ek0PblltuxxsjvSH7pIb7NVTDWRPQvODwzLVgLjPmgD7EUxe5r+FoK+R4bw87hqxNq0F/bWo1Crg9JV2w1SjlOyVvU5PyNRzMcOLvkC8StMPkC7ujQ4RPIlE6SdGITc3DvobjxCOU9zDSjRNKsF/vupGosioYuCxIe/SitX0NlyFoCHGyiWP8V3bY5x3xs2VXZkmDfII3P/BXt6/hkhSEaDg6O848T+W2abaI79Lq7+CUQxJzdg+b3r3LxQxSVSppSxV+swLdZ9akoF8Nh0cITFY3V0fFahnLOom4cYdEHfNESTQDa7iUHPx2iTWT+LhcdjNezjoL3cG96CQeVMNhwaEvxM6suYlSUui0pP2uU0HWxWNyKsT3pYZPC1m/Gg6fyffqdWjmQ3icRqaNXVwaGlg1FZtT+eafv3tbed8+ddzi3xO5IzaJuIyNqaLGV204tueEm5NMdXJCyA2HmFj8XXIfhTcPjZSI2LmioEvQIWT0Jv4ftEs5qXCyRRcAAAAASUVORK5CYII=' />
