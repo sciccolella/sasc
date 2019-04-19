@@ -33,6 +33,7 @@
 #include "tree.h"
 #include "sastep.h"
 #include "mt19937ar.h"
+#include <omp.h>
 
 #ifdef NDEBUG
 #include <assert.h>
@@ -260,47 +261,46 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
         like_11[j] = log(1 - alpha[j]);
     }
 
-
-// #omp parallel for shared()
+    #pragma omp parallel for reduction(+:maximum_likelihood) num_threads(4)
     for (int i = 0; i < n; i++) {
-        int best_sigma = -1;
+        // int best_sigma = -1;
         double best_lh = -DBL_MAX;
 
         for (int node = 0; node < node_max; node++) {
+        // for (node = 0; node < node_max; node++) {
             if (nodes_genotypes[node  * m + 0] != 3) {
                 double lh = 0;
 
                 for (int j = 0; j < m; j++) {
                     double p = 1;
                     // double p = prob(inmatrix[i][j], nodes_genotypes[node * m + j], alpha[j], beta);
-                    int I = inmatrix[i][j];
-                    int E = nodes_genotypes[node * m + j];
-                    if (I == 0 && E == 0) {
+                    // int I = inmatrix[i][j];
+                    // int E = nodes_genotypes[node * m + j];
+                    if (inmatrix[i][j] == 0 && nodes_genotypes[node * m + j] == 0) {
                         p = like_00;
-                    } else if (I == 0 && E == 1) {
+                    } else if (inmatrix[i][j] == 0 && nodes_genotypes[node * m + j] == 1) {
                         p = like_01[j];
-                    } else if (I == 1 && E == 0) {
+                    } else if (inmatrix[i][j] == 1 && nodes_genotypes[node * m + j] == 0) {
                         p = like_10;
-                    } else if (I== 1 && I == 1) {
+                    } else if (inmatrix[i][j] == 1 && nodes_genotypes[node * m + j] == 1) {
                         p = like_11[j];
-                    } else if (I == 2) {
+                    } else if (inmatrix[i][j] == 2) {
                         p = like_2;
                     }
                     lh += p;
                 }
 
                 if (lh > best_lh) {
-                    best_sigma = node;
                     best_lh = lh;
                 }
             }
         }
-
-        sigma[i] = best_sigma;
         maximum_likelihood += best_lh;
     }
 
     free(nodes_genotypes);
+    free(like_01);
+    free(like_11);
     return maximum_likelihood;
 }
 

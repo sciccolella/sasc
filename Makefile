@@ -1,12 +1,13 @@
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-	CFLAGS = -std=gnu99 -DNDEBUG -O3
+	CC = /usr/bin/gcc
+	CFLAGS = -std=gnu99 -DNDEBUG -O3 -fopenmp
 endif
 ifeq ($(UNAME), Darwin)
-	CFLAGS = -std=c99 -DNDEBUG -O3
+	CC = /usr/local/bin/gcc-8
+	CFLAGS = -std=c99 -DNDEBUG -O3 -fopenmp
 endif
-CC = /usr/bin/gcc
 
 .PHONY: all
 
