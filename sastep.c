@@ -208,7 +208,7 @@ add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss, vec
 
 double
 greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double* alpha,
-        double beta, double *gammas, int *k_loss) {
+        double beta, double *gammas, int *k_loss, int CORES) {
 
     int node_max = vector_total(&tree_vec);
 
@@ -261,7 +261,7 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
         like_11[j] = log(1 - alpha[j]);
     }
 
-    #pragma omp parallel for reduction(+:maximum_likelihood) num_threads(4)
+    #pragma omp parallel for reduction(+:maximum_likelihood) num_threads(CORES)
     for (int i = 0; i < n; i++) {
         int best_sigma = -1;
         double best_lh = -DBL_MAX;
@@ -552,7 +552,7 @@ accept_prob(double old_lh, double new_lh, double current_temp) {
 
 node_t *
 anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double beta,  int **inmatrix,
-       double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES, elpar_t* el_params, double* gamma, int *Cj, int MONOCLONAL) {
+       double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES, elpar_t* el_params, double* gamma, int *Cj, int MONOCLONAL, int CORES) {
 
     double current_temp = start_temp;
     double current_cooling_rate = cooling_rate;
@@ -576,7 +576,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
 
     unsigned int step = 0;
 
-    double current_lh = greedy_tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix, n, m, alpha, beta, gamma, current_kloss);
+    double current_lh = greedy_tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix, n, m, alpha, beta, gamma, current_kloss, CORES);
 
     printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
     while (current_temp > min_temp) {
@@ -607,9 +607,9 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
         double new_lh = 0;
         if (el_params->changed == 1) {
             // TODO: change gamma to g_x
-            new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs, el_params->b_x, el_params->g_xs, copy_kloss);
+            new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs, el_params->b_x, el_params->g_xs, copy_kloss, CORES);
         } else {
-            new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta, gamma, copy_kloss);
+            new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta, gamma, copy_kloss, CORES);
         }
 
 
@@ -631,7 +631,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
             vector_init(&current_losses_vec);
 
             // Copy new solution to current
-            double test_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta, gamma, copy_kloss);
+            double test_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, alpha, beta, gamma, copy_kloss, CORES);
             assert(test_lh == new_lh);
 
             current_lh = new_lh;
@@ -639,7 +639,7 @@ anneal(node_t *root, vector tree_vec, int n, int m, int k, double* alpha, double
             for (int i = 0; i < m; i++) { current_kloss[i] = copy_kloss[i]; }
 
             current_root = treecpy(copy_root, &current_tree_vec, &current_losses_vec, n);
-            double test_clh = greedy_tree_loglikelihood(current_root, current_tree_vec, current_sigma, inmatrix, n, m, alpha, beta, gamma, current_kloss);
+            double test_clh = greedy_tree_loglikelihood(current_root, current_tree_vec, current_sigma, inmatrix, n, m, alpha, beta, gamma, current_kloss, CORES);
             assert(test_clh == test_lh);
 
 

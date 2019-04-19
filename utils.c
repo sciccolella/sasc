@@ -159,6 +159,8 @@ get_arguments(int cargc, char **cargsv) {
     arguments->el_b_variance = 0;
     arguments->el_g_variance = 0;
 
+    arguments->cores = 1;
+
     strcpy(arguments->mut_file, "NULL");
     strcpy(arguments->cell_file, "NULL");
     int inserted_args = 0;
@@ -172,7 +174,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:p:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -254,6 +256,9 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'G':
                 sscanf(optarg, "%lf", &arguments->el_g_variance);
+                break;
+            case 'p':
+                arguments->cores = atoi(optarg);
                 break;
             case '?':
                 if (isprint (optopt))

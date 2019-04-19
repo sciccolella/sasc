@@ -47,6 +47,7 @@ typedef struct Arguments {
     double el_a_variance;
     double el_b_variance;
     double el_g_variance;
+    int cores;
 } args_t;
 
 void shuffle(int *array, int n);
