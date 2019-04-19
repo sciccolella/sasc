@@ -263,7 +263,7 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
 
     #pragma omp parallel for reduction(+:maximum_likelihood) num_threads(4)
     for (int i = 0; i < n; i++) {
-        // int best_sigma = -1;
+        int best_sigma = -1;
         double best_lh = -DBL_MAX;
 
         for (int node = 0; node < node_max; node++) {
@@ -291,10 +291,12 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
                 }
 
                 if (lh > best_lh) {
+                    best_sigma = node;
                     best_lh = lh;
                 }
             }
         }
+        sigma[i] = best_sigma;
         maximum_likelihood += best_lh;
     }
 
