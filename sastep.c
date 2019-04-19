@@ -136,46 +136,52 @@ add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss, vec
     return 0;
 }
 
-double
-prob(int I, int E, double alpha, double beta){
-    double p = 0;
-    switch(I) {
-        case 0:
-            switch(E) {
-                case 0:
-                    p = 1 - beta;
-                    break;
-                case 1:
-                    p = alpha;
-                    break;
-                default:
-                    fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
-                    exit(EXIT_FAILURE);
-            }
-            break;
-        case 1:
-            switch(E) {
-                case 0:
-                    p = beta;
-                    break;
-                case 1:
-                    p = 1 - alpha;
-                    break;
-                default:
-                    fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
-                    exit(EXIT_FAILURE);
-            }
-            break;
-        case 2:
-            p = 1;
-            break;
-        default:
-            fprintf(stderr, "ERROR: Unkown value of I (%d).\n", I);
-            exit(EXIT_FAILURE);
-    }
+// double
+// prob(int I, int E, double alpha, double beta){
+//     double p = 0;
+//     // if(I == 0 && E == 0) {
+//     //     return 1 - beta;
+//     // }
+//     // if(I == 0 && E == 1) {
+//     //     return alpha;
+//     // }
+//     switch(I) {
+//         case 0:
+//             switch(E) {
+//                 case 0:
+//                     p = 1 - beta;
+//                     break;
+//                 case 1:
+//                     p = alpha;
+//                     break;
+//                 default:
+//                     fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
+//                     exit(EXIT_FAILURE);
+//             }
+//             break;
+//         case 1:
+//             switch(E) {
+//                 case 0:
+//                     p = beta;
+//                     break;
+//                 case 1:
+//                     p = 1 - alpha;
+//                     break;
+//                 default:
+//                     fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
+//                     exit(EXIT_FAILURE);
+//             }
+//             break;
+//         case 2:
+//             p = 1;
+//             break;
+//         default:
+//             fprintf(stderr, "ERROR: Unkown value of I (%d).\n", I);
+//             exit(EXIT_FAILURE);
+//     }
 
-    return p;
-}
+//     return p;
+// }
 
 //double
 //tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double alpha, double beta) {
@@ -227,6 +233,35 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
 
     double maximum_likelihood = loss_weight + 0;
 
+    // double *likelihood_matrix[3][3];
+    // // for (int i = 0; i < 3; i++) {
+    // //     for (int j = 0; j <3; j++) {
+    // //         likelihood_matrix[i][j] = malloc(m * sizeof(double));
+    // //         for (int k = 0; k < m; k++) {
+
+    // //         }
+    // //     }
+    // // }
+
+    // // Compile 0-0
+    // likelihood_matrix[0][0] = malloc(m * sizeof(double));
+    // for (int k = 0; k < m; k++) {
+
+    // }
+
+    double like_00 = log(1-beta);
+    double like_10 = log(beta);
+    double *like_01 = malloc(m * sizeof(double));
+    double *like_11 = malloc(m * sizeof(double));
+    double like_2 = 0;
+
+    for (int j = 0; j < m; j++) {
+        like_01[j] = log(alpha[j]);
+        like_11[j] = log(1 - alpha[j]);
+    }
+
+
+// #omp parallel for shared()
     for (int i = 0; i < n; i++) {
         int best_sigma = -1;
         double best_lh = -DBL_MAX;
@@ -236,8 +271,22 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
                 double lh = 0;
 
                 for (int j = 0; j < m; j++) {
-                    double p = prob(inmatrix[i][j], nodes_genotypes[node * m + j], alpha[j], beta);
-                    lh += log(p);
+                    double p = 1;
+                    // double p = prob(inmatrix[i][j], nodes_genotypes[node * m + j], alpha[j], beta);
+                    int I = inmatrix[i][j];
+                    int E = nodes_genotypes[node * m + j];
+                    if (I == 0 && E == 0) {
+                        p = like_00;
+                    } else if (I == 0 && E == 1) {
+                        p = like_01[j];
+                    } else if (I == 1 && E == 0) {
+                        p = like_10;
+                    } else if (I== 1 && I == 1) {
+                        p = like_11[j];
+                    } else if (I == 2) {
+                        p = like_2;
+                    }
+                    lh += p;
                 }
 
                 if (lh > best_lh) {

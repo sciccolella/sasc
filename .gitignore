@@ -7,3 +7,4 @@ sasc.dSYM
 CMakeLists.txt
 *.sh
 *.o
+.history
