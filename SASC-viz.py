@@ -128,26 +128,43 @@ class Node:
             return sep.join('%s-' % x for x in self.mutations)
 
     def get_s(self):
-        return int((self.downstream_support / (self.tot_cells - self.parent.cumulative_support))*100)
+        # return int((self.downstream_support / (self.tot_cells - self.parent.cumulative_support))*100)
+        # print(self.downstream_support, self.parent.downstream_support - self.parent.support)
+        try:
+            return int(
+                (self.downstream_support / (self.parent.downstream_support - self.parent.support)) * 100
+            )
+        except:
+            return 0
 
     def print_node_dot(self, sep=','):
         c_red = Color("#FF1919")
-        c_gradient = list(c_red.range_to(Color("#397D02"), 100))
+        c_green = Color("#397D02")
+        c_blue = Color("#3270FC")
+        c_gradient = list(c_blue.range_to(c_green, 100))
+        # print(c_gradient)
 
         if self.parent:
             print('\t"%s" -> "%s";' % (self.parent.id, self.id))
 
             # s = int((self.downstream_support / (self.tot_cells - self.parent.cumulative_support))*100)
             s = self.get_s()
-            
-            if self.parent.parent:
-                parent_s = self.parent.c_grad
-                increment = int((100 - parent_s) * (s / 100.0))
-                color = c_gradient[parent_s + increment]
-                self.c_grad = parent_s + increment
+            # print(s)
+            # if self.parent.parent:
+            #     # parent_s = self.parent.c_grad
+            #     # increment = int((100 - parent_s) * (s / 100.0))
+            #     # color = c_gradient[parent_s + increment]
+            #     # self.c_grad = parent_s + increment
+            #     color = c_gradient[s]
+            #     self.c_grad = s
+            # else:
+            #     # print(s)
+            #     color = c_gradient[s]
+            #     self.c_grad = s
+            if s == 0:
+                color = c_red
             else:
-                # print(s)
-                color = c_gradient[s]
+                color = c_gradient[s-1]
                 self.c_grad = s
 
             print_label = None
