@@ -85,6 +85,7 @@ Usage
 **Simulated Annealing parameters (optional)**
 - `-S [FLOAT]`: Starting temperature of the Simulated Annealing algorithm.
 - `-C [FLOAT]`: Cooling rate of the Simulated Annealing algorithm.
+- `-p [INT]`: Total number of cores to be used by the tool.
 
 **Error learning  parameters (optional)**
 - `-A [FLOAT]`: Standard deviation for new FN discovery.
