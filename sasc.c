@@ -326,11 +326,11 @@ int main (int argc, char **argv)
 
 
         // get log-likelihood
-        double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
+        double lh = greedy_tree_loglikelihood(root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj, arguments->cores);
         // for (int i = 0; i < N; i++) { printf("%d ", SIGMA[i]); } printf("\n");
         // printf("Start log-like: %lf\n", lh);
         node_t *ml_tree = anneal(root, ml_tree_vec, N, M, K, MULTI_ALPHAS, BETA, INPUT_MATRIX, START_TEMP, COOLING_RATE,
-                MIN_TEMP, MAX_LOSSES, el_params, MULTI_GAMMAS, Cj, MONOCLONAL);
+                MIN_TEMP, MAX_LOSSES, el_params, MULTI_GAMMAS, Cj, MONOCLONAL, arguments->cores);
         
         vector_free(&ml_tree_vec);
         vector_init(&ml_tree_vec);
@@ -341,7 +341,7 @@ int main (int argc, char **argv)
 
 //        for (int i = 0; i < M; i++) { printf("%d ", Cj[i]); } printf("\n");
 
-        double current_lh = greedy_tree_loglikelihood(ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
+        double current_lh = greedy_tree_loglikelihood(ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj, arguments->cores);
         // printf("Maximum log-likelihood: %lf\n", current_lh);
 
         if (current_lh > best_loglike) {
@@ -365,7 +365,7 @@ int main (int argc, char **argv)
     }
 
 //    for (int i = 0; i < M; i++) { printf("%d ", Cj[i]); } printf("\n");
-    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj);
+    double best_calculated_likelihood = greedy_tree_loglikelihood(best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA, MULTI_GAMMAS, Cj, arguments->cores);
     // printf("Maximum likelihood found: %f\n", best_calculated_likelihood);
 
     if (arguments->print_leaves == 1) {
