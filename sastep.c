@@ -137,75 +137,6 @@ add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss, vec
     return 0;
 }
 
-// double
-// prob(int I, int E, double alpha, double beta){
-//     double p = 0;
-//     // if(I == 0 && E == 0) {
-//     //     return 1 - beta;
-//     // }
-//     // if(I == 0 && E == 1) {
-//     //     return alpha;
-//     // }
-//     switch(I) {
-//         case 0:
-//             switch(E) {
-//                 case 0:
-//                     p = 1 - beta;
-//                     break;
-//                 case 1:
-//                     p = alpha;
-//                     break;
-//                 default:
-//                     fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
-//                     exit(EXIT_FAILURE);
-//             }
-//             break;
-//         case 1:
-//             switch(E) {
-//                 case 0:
-//                     p = beta;
-//                     break;
-//                 case 1:
-//                     p = 1 - alpha;
-//                     break;
-//                 default:
-//                     fprintf(stderr, "ERROR: Unkown value of E (%d).\n", E);
-//                     exit(EXIT_FAILURE);
-//             }
-//             break;
-//         case 2:
-//             p = 1;
-//             break;
-//         default:
-//             fprintf(stderr, "ERROR: Unkown value of I (%d).\n", I);
-//             exit(EXIT_FAILURE);
-//     }
-
-//     return p;
-// }
-
-//double
-//tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double alpha, double beta) {
-//    double lh = 0;
-//    int gtp[m];
-//
-//    for (int i = 0; i < n; i++) {
-//        for (int j = 0; j < m; j++) {
-//            gtp[j] = 0;
-//        }
-//        node_t *node = vector_get(&tree_vec, sigma[i]);
-//        assert(node != NULL);
-//        get_genotype_profile(vector_get(&tree_vec, sigma[i]), gtp);
-//
-//        for (int j = 0; j < m; j++) {
-//            double p = prob(inmatrix[i][j], gtp[j], alpha, beta);
-//            lh += log(p);
-//        }
-//    }
-//
-//    return lh;
-//}
-
 double
 greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmatrix, int n, int m, double* alpha,
         double beta, double *gammas, int *k_loss, int CORES) {
@@ -233,22 +164,6 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
     }
 
     double maximum_likelihood = loss_weight + 0;
-
-    // double *likelihood_matrix[3][3];
-    // // for (int i = 0; i < 3; i++) {
-    // //     for (int j = 0; j <3; j++) {
-    // //         likelihood_matrix[i][j] = malloc(m * sizeof(double));
-    // //         for (int k = 0; k < m; k++) {
-
-    // //         }
-    // //     }
-    // // }
-
-    // // Compile 0-0
-    // likelihood_matrix[0][0] = malloc(m * sizeof(double));
-    // for (int k = 0; k < m; k++) {
-
-    // }
 
     double like_00 = log(1-beta);
     double like_10 = log(beta);
