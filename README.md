@@ -88,9 +88,9 @@ Usage
 - `-p [INT]`: Total number of cores to be used by the tool.
 
 **Error learning  parameters (optional)**
-- `-A [FLOAT]`: Standard deviation for new FN discovery.
-- `-B [FLOAT]`: Standard deviation for new FP discovery.
-- `-G [FLOAT]`: Standard deviation for new GAMMA discovery.
+- `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
+- `-A [FLOAT]`: Standard deviation for new FN discovery. [Disabled by default.]
+- `-G [FLOAT]`: Standard deviation for new GAMMA discovery. [Disabled by default.]
 
 Output
 ---------
@@ -221,4 +221,7 @@ Definition of mutation support
 The support  _s<sub>i</sub>_ of a mutation _i_ is computed on the _n x m_ inferred matrix _E_ as follows.
 Let  _pr(i)_ be the set of nodes in the path from the root to _i_ let _st(i)_ be the set of nodes in the subtree rooted in _i_, and let _C(i)_ be the number of cells assigned to the node _i_. Then the mutation support _s<sub>i</sub>_ is:
 
-![examples/support_definition.png](examples/support_definition.png)
+
+<p align="center">
+<img src="examples/support_definition.png" width="300">
+</p>
