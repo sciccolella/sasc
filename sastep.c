@@ -163,7 +163,7 @@ greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma, int **inmat
         loss_weight += k_loss[j] * log(gammas[j]);
     }
 
-    double maximum_likelihood = loss_weight + 0;
+    double maximum_likelihood = 0 - loss_weight;
 
     double like_00 = log(1-beta);
     double like_10 = log(beta);
