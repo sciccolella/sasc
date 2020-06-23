@@ -408,11 +408,11 @@ lev_count[0] = 1
 
 calc_supports(x.root, lev_count)
 
-if args.collapse_simple:
-    collapse_simple_paths(x, x.root)
-
 if args.collapse_support:
     collapse_low_support(x, x.root, args.collapse_support)
+
+if args.collapse_simple:
+    collapse_simple_paths(x, x.root)
 
 
 lev_count = defaultdict(int)
