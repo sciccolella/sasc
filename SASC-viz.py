@@ -25,6 +25,7 @@ import argparse
 from colour import Color
 import re
 import sys
+import textwrap
 
 def load_from_sasc(filepath, cell_labels, show_support=False, score=True, show_color=True):
     tree = []
@@ -54,6 +55,7 @@ def load_from_sasc(filepath, cell_labels, show_support=False, score=True, show_c
                 s = int(s)
                 x = TREE.get_node(s)
                 x.support += 1
+                x.cells_labels.append(e)
                 continue
             
             s = int(s)
@@ -118,14 +120,18 @@ class Node:
         self.downstream_support = 0
 
         self.tot_cells = 0
+        self.cells_labels = []
         self.show_support = False
         self.show_color = False
     
-    def get_name(self, sep=','):
+    def get_name(self, sep=', '):
         if not self.deletion:
             return sep.join(self.mutations)
         else:
             return sep.join('%s-' % x for x in self.mutations)
+
+    def get_cellslabels(self, sep=', '):
+        return sep.join(self.cells_labels)
 
     def get_s(self):
         # return int((self.downstream_support / (self.tot_cells - self.parent.cumulative_support))*100)
@@ -137,7 +143,7 @@ class Node:
         except:
             return 0
 
-    def print_node_dot(self, sep=','):
+    def print_node_dot(self, sep=', ', wrap_width=40, print_cellslabels=False):
         c_red = Color("#FF1919")
         c_green = Color("#397D02")
         c_blue = Color("#3270FC")
@@ -176,6 +182,9 @@ class Node:
             else:
                 print_label = self.get_name(sep=sep)
 
+            if wrap_width > 0:
+                print_label = '\\n'.join(textwrap.wrap(print_label, break_long_words=False, width=wrap_width))
+
             if self.show_color:
                 color_label = ', color="{}"'.format(color)
             else:
@@ -193,6 +202,17 @@ class Node:
                     print_label,
                     color_label
                     ))
+
+            if print_cellslabels:
+                labels = self.get_cellslabels(sep=sep)
+                if wrap_width > 0:
+                    labels = '\\n'.join(textwrap.wrap(labels, break_long_words=False, width=wrap_width))
+                print('\t"%s" -> "%s-cells";' % (self.id, self.id))
+                print('\t"{0}-cells" [label="{1}", shape=rect];'.format(
+                    self.id, 
+                    labels
+                    ))
+
     
     def calc_cumalitve_sup(self):
         if self.parent:
@@ -238,6 +258,7 @@ class Tree:
 
         for m in to_merge.mutations:
             merged.mutations.append(m)
+        merged.cells_labels += to_merge.cells_labels
         self.remove_node(to_merge)
         for m in merged.mutations:
             self.mut_to_node[m] = merged
@@ -320,17 +341,17 @@ def delete_subtree(tree, node):
             delete_subtree(tree, child)
         tree.pop_node(node)
 
-def __print_tree(node, ds_filter=0, sep=','):
+def __print_tree(node, ds_filter=0, **kwargs):
     if len(node.children) == 0:
         if node.cumulative_support >= ds_filter:
-            node.print_node_dot(sep=sep)
+            node.print_node_dot(**kwargs)
     else:
         if node.cumulative_support >= ds_filter:
-            node.print_node_dot(sep=sep)
+            node.print_node_dot(**kwargs)
         for child in node.children:
-            __print_tree(child, ds_filter=ds_filter, sep=sep)
+            __print_tree(child, ds_filter=ds_filter, **kwargs)
 
-def print_dot_tree(node, ds_filter=0, sep=',', show_support=False):
+def print_dot_tree(node, ds_filter=0, show_support=False, **kwargs):
     print('digraph phylogeny {')
     print('\tnode [penwidth=2];')
     if show_support:
@@ -338,7 +359,7 @@ def print_dot_tree(node, ds_filter=0, sep=',', show_support=False):
     else:
         support = ''
     print('\t"{0}" [label="{1}{2}"];'.format(node.id, ','.join(node.mutations), support))
-    __print_tree(node, ds_filter=ds_filter, sep=sep)
+    __print_tree(node, ds_filter=ds_filter, **kwargs)
     print('}')
 
 def calc_supports(node, level_count):
@@ -357,67 +378,73 @@ def calc_supports(node, level_count):
 
 
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='SASC visualitation tool', add_help=True)
 
-parser = argparse.ArgumentParser(description='SASC visualitation tool', add_help=True)
+    parser.add_argument('-t', '--tree', action='store', type=str, required=True,
+                        help='path of the input file.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-E', '--cellnames', action='store', type=str,
+                        required=False,
+                        help="path to the cell labels file")
+    group.add_argument('-n', '--totcell', action='store', type=int,
+                        required=False,
+                        help="total number of cells")
 
-parser.add_argument('-t', '--tree', action='store', type=str, required=True,
-                    help='path of the input file.')
-group = parser.add_mutually_exclusive_group()
-group.add_argument('-E', '--cellnames', action='store', type=str,
-                    required=False,
-                    help="path to the cell labels file")
-group.add_argument('-n', '--totcell', action='store', type=int,
-                    required=False,
-                    help="total number of cells")
+    parser.add_argument('--show-support', action='store_true', required=False,
+                        help="Show the support for each node.")
 
-parser.add_argument('--show-support', action='store_true', required=False,
-                    help="Show the support for each node.")
+    parser.add_argument('--show-color', action='store_true', required=False,
+                        help="Enable coloring of nodes.")
 
-parser.add_argument('--show-color', action='store_true', required=False,
-                    help="Enable coloring of nodes.")
+    parser.add_argument('--show-cell-labels', action='store_true', required=False,
+                        help="Show cells nodes and their labels.")
 
-parser.add_argument('--collapse-support', action='store', type=float,
-                    required=False,
-                    help="Collapse path with lower support")
+    parser.add_argument('--collapse-support', action='store', type=float,
+                        required=False,
+                        help="Collapse path with lower support")
 
-parser.add_argument('--collapse-simple', action='store_true',
-                    required=False,
-                    help="Collapse simple paths")
+    parser.add_argument('--collapse-simple', action='store_true',
+                        required=False,
+                        help="Collapse simple paths")
 
-parser.add_argument('--sep', action='store', default=',', type=str,
-                    help="Labels' separator")
+    parser.add_argument('--sep', action='store', default=', ', type=str,
+                        help="Labels' separator")
 
-args = parser.parse_args()
+    parser.add_argument('--wrap-width', action='store', default=0, type=int,
+                        help="Max width to wrap labels. Set to 0 to no wrap.")
 
-cells_labels = set()
+    args = parser.parse_args()
 
-if args.cellnames:
-    with open(args.cellnames) as fin:
-        for line in fin:
-            cells_labels.add(line.strip())
-else:
-    for x in range(args.totcell):
-        cells_labels.add('cell{}'.format(x+1))
+    cells_labels = set()
 
-x = load_from_sasc(args.tree, cells_labels, show_support=args.show_support, show_color=args.show_color, score=True)
+    if args.cellnames:
+        with open(args.cellnames) as fin:
+            for line in fin:
+                cells_labels.add(line.strip())
+    else:
+        for x in range(args.totcell):
+            cells_labels.add('cell{}'.format(x+1))
 
-from collections import defaultdict
+    x = load_from_sasc(args.tree, cells_labels, show_support=args.show_support, show_color=args.show_color, score=True)
 
-lev_count = defaultdict(int)
-lev_count[0] = 1
+    from collections import defaultdict
 
-calc_supports(x.root, lev_count)
+    lev_count = defaultdict(int)
+    lev_count[0] = 1
 
-if args.collapse_support:
-    collapse_low_support(x, x.root, args.collapse_support)
+    calc_supports(x.root, lev_count)
 
-if args.collapse_simple:
-    collapse_simple_paths(x, x.root)
+    if args.collapse_support:
+        collapse_low_support(x, x.root, args.collapse_support)
+
+    if args.collapse_simple:
+        collapse_simple_paths(x, x.root)
 
 
-lev_count = defaultdict(int)
-lev_count[0] = 1
+    lev_count = defaultdict(int)
+    lev_count[0] = 1
 
-calc_supports(x.root, lev_count)
+    calc_supports(x.root, lev_count)
 
-print_dot_tree(x.root, sep=args.sep, show_support=args.show_support)
+    print_dot_tree(x.root, sep=args.sep, show_support=args.show_support, wrap_width=args.wrap_width, print_cellslabels=args.show_cell_labels)
