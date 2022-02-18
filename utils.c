@@ -126,6 +126,7 @@ print_help() {
     printf("\vOutput parameters (optional):\n");
     printf("\t-l \t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
     printf("\t-x \t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
+    printf("\t-P \t\t\tPrefix for the output files.\n");
 
     printf("\vSimulated Annealing parameters (optional):\n");
     printf("\t-S STARTTEMP\t\tStarting temperature of the Simulated Annealing algorithm.\n");
@@ -167,6 +168,7 @@ get_arguments(int cargc, char **cargsv) {
 
     char *cvalue = NULL;
     int c;
+    int prefix = 0;
 
     double single_alpha;
     double single_gamma;
@@ -174,7 +176,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:p:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:p:P:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -214,6 +216,10 @@ get_arguments(int cargc, char **cargsv) {
             case 'i':
                 strcpy(arguments->infile, optarg);
                 inserted_args++;
+                break;
+            case 'P':
+                strcpy(arguments->prefix, optarg);
+                prefix = 1;
                 break;
             case 'e':
                 strcpy(arguments->mut_file, optarg);
@@ -281,6 +287,10 @@ get_arguments(int cargc, char **cargsv) {
         arguments->max_del = 0;
     if (arguments->max_del == 0)
         arguments->k = 0;
+
+    if (prefix == 0) {
+        strcpy(arguments->prefix, remove_extension(arguments->infile));
+    }
 
     return arguments;
 }

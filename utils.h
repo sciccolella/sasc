@@ -48,6 +48,7 @@ typedef struct Arguments {
     double el_b_variance;
     double el_g_variance;
     int cores;
+    char prefix[255];
 } args_t;
 
 void shuffle(int *array, int n);

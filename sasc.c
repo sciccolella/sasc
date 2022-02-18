@@ -62,8 +62,8 @@ int main (int argc, char **argv)
 
     int MONOCLONAL = arguments->monoclonal;
 
-    char OUT_PATH[255];
-    sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
+    char OUT_PATH[300];
+    sprintf(OUT_PATH, "%s.mlt.gv", arguments->prefix);
 
     printf("Starting SASC.\n");
 
@@ -384,8 +384,8 @@ int main (int argc, char **argv)
     printf("\n");
 
     if (arguments->print_expected == 1) {
-        char OUT_MATRIX[255];
-        sprintf(OUT_MATRIX, "%s_out.txt", remove_extension(arguments->infile));
+        char OUT_MATRIX[300];
+        sprintf(OUT_MATRIX, "%s.out.txt", arguments->prefix);
 
         FILE *fpo;
         fpo = fopen(OUT_MATRIX, "w+");
